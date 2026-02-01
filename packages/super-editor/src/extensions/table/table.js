@@ -1025,17 +1025,27 @@ export const Table = Node.create({
        */
       setCellBackground:
         (value) =>
-        ({ editor, commands, dispatch }) => {
+        ({ editor, commands, state, tr, dispatch }) => {
           const { selection } = editor.state;
+          const color = value?.startsWith('#') ? value.slice(1) : value;
 
-          if (!isCellSelection(selection)) {
+          if (isCellSelection(selection)) {
+            if (dispatch) {
+              return commands.setCellAttr('background', { color });
+            }
+            return true;
+          }
+
+          const $pos = selection.$anchor;
+          const cellPos = cellAround($pos);
+          if (!cellPos) {
             return false;
           }
 
-          const color = value?.startsWith('#') ? value.slice(1) : value;
-
           if (dispatch) {
-            return commands.setCellAttr('background', { color });
+            const cellNode = cellPos.nodeAfter;
+            tr.setNodeMarkup(cellPos.pos, null, { ...cellNode.attrs, background: { color } });
+            dispatch(tr);
           }
 
           return true;
