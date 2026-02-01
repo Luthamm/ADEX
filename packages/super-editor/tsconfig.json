@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "checkJs": false,
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@": ["./src/*"],
+      "@core/*": ["./src/core/*"],
+      "@extensions/*": ["./src/extensions/*"],
+      "@features/*": ["./src/features/*"],
+      "@components/*": ["./src/components/*"],
+      "@helpers/*": ["./src/core/helpers/*"],
+      "@converter/*": ["./src/core/super-converter/*"],
+      "@tests/*": ["./src/tests/*"],
+      "@translator": ["./src/core/super-converter/v3/node-translator/"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.js", "**/*.test.ts"]
+}

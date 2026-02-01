@@ -1,0 +1,70 @@
+logs
+*.log
+.cache
+.DS_Store
+.temp
+node_modules
+dist
+dist-ssr
+dist-types
+*.local
+.env
+.npmrc
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/setings.json.sample
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# VitePress
+.vitepress/.temp
+.vitepress/.cache
+.vitepress/dist
+
+packages/super-editor/src/tests/data/*/
+
+packages/word-layout/tests/**/*.js
+packages/word-layout/tests/**/*.d.ts
+packages/word-layout/tests/**/*.map
+
+# Playwright
+test-results
+*.tgz
+e2e-tests/tests/**/*darwin*
+e2e-tests/test-results/**/*darwin*
+e2e-tests/tests/visuals/layout-compare.spec.js-snapshots/*
+
+!examples/chrome-extension/dist
+
+# Coverage reports
+coverage
+coverage/
+**/coverage
+**/coverage/
+reports/
+
+**/src/**/*.d.ts.map
+**/src/**/*.js.map
+
+# TypeScript build info files
+*.tsbuildinfo
+
+# Planning and progress tracking documents
+**/plan/progress.md
+
+codex.config.json
+perf-baseline-results.json
+.claude
+dev/

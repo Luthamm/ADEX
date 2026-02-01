@@ -1,0 +1,116 @@
+{
+  "name": "superdoc",
+  "type": "module",
+  "version": "1.10.1-next.4",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superdoc-dev/superdoc.git",
+    "directory": "packages/superdoc"
+  },
+  "homepage": "https://www.superdoc.dev/",
+  "bugs": {
+    "url": "https://github.com/superdoc-dev/superdoc/issues"
+  },
+  "readme": "../../README.md",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/superdoc/src/index.d.ts",
+      "source": "./src/index.js",
+      "import": "./dist/superdoc.es.js",
+      "require": "./dist/superdoc.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "source": "./src/types.ts",
+      "import": "./dist/types.es.js",
+      "require": "./dist/types.cjs"
+    },
+    "./converter": {
+      "import": "./dist/super-editor/converter.es.js"
+    },
+    "./docx-zipper": {
+      "import": "./dist/super-editor/docx-zipper.es.js"
+    },
+    "./super-editor": {
+      "types": "./dist/super-editor/src/index.d.ts",
+      "import": "./dist/super-editor.es.js",
+      "require": "./dist/super-editor.cjs"
+    },
+    "./file-zipper": {
+      "import": "./dist/super-editor/file-zipper.es.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "types": "./dist/superdoc/src/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "super-editor": [
+        "./dist/super-editor/src/index.d.ts"
+      ],
+      "types": [
+        "./dist/types.d.ts"
+      ]
+    }
+  },
+  "main": "./dist/superdoc.umd.js",
+  "module": "./dist/superdoc.es.js",
+  "scripts": {
+    "dev": "vite",
+    "dev:collab": "concurrently -k -n VITE,COLLAB -c cyan,green \"vite\" \"node src/dev/collab-server.js\"",
+    "collab-server": "node src/dev/collab-server.js",
+    "build": "pnpm --prefix ../super-editor run types:build && vite build && pnpm run build:umd",
+    "postbuild": "node ./scripts/ensure-types.cjs",
+    "build:es": "pnpm --prefix ../super-editor run types:build && vite build && node ./scripts/ensure-types.cjs",
+    "watch:es": "vite build --watch",
+    "build:umd": "vite build --config vite.config.umd.js",
+    "clean": "rm -rf dist",
+    "pack:local": "pnpm run pack",
+    "pack": "pnpm run build:es && pnpm pack && mv $(ls superdoc-*.tgz) ./superdoc.tgz",
+    "pack:es": "pnpm run build:es && pnpm pack && mv $(ls superdoc-*.tgz) ./superdoc.tgz",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "buffer-crc32": "catalog:",
+    "eventemitter3": "catalog:",
+    "jsdom": "catalog:",
+    "naive-ui": "catalog:",
+    "pinia": "catalog:",
+    "rollup-plugin-copy": "catalog:",
+    "uuid": "catalog:",
+    "vue": "catalog:",
+    "y-websocket": "catalog:"
+  },
+  "peerDependencies": {
+    "@hocuspocus/provider": "^2.13.6",
+    "pdfjs-dist": ">=4.3.136 <=4.6.82",
+    "y-prosemirror": "catalog:",
+    "yjs": "catalog:"
+  },
+  "devDependencies": {
+    "@hocuspocus/provider": "catalog:",
+    "@hocuspocus/server": "catalog:",
+    "@superdoc/common": "workspace:*",
+    "@superdoc/super-editor": "workspace:*",
+    "concurrently": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "jszip": "catalog:",
+    "nodemon": "catalog:",
+    "pdfjs-dist": "catalog:",
+    "postcss-nested": "catalog:",
+    "postcss-prefixwrap": "catalog:",
+    "prosemirror-model": "catalog:",
+    "prosemirror-state": "catalog:",
+    "rollup-plugin-visualizer": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:",
+    "vite-plugin-node-polyfills": "catalog:",
+    "vitest": "catalog:",
+    "xml-js": "catalog:"
+  }
+}

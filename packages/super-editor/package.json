@@ -1,0 +1,140 @@
+{
+  "name": "@superdoc/super-editor",
+  "version": "0.0.1",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "source": "./src/index.js",
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/super-editor.es.js"
+    },
+    "./types": {
+      "source": "./src/types.ts",
+      "types": "./dist/src/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./*": {
+      "source": "./src/*"
+    },
+    "./converter": {
+      "source": "./src/core/super-converter/SuperConverter.js",
+      "import": "./dist/converter.es.js"
+    },
+    "./converter/internal/*": {
+      "default": "./src/core/super-converter/*"
+    },
+    "./docx-zipper": {
+      "source": "./src/core/DocxZipper.js",
+      "import": "./dist/docx-zipper.es.js"
+    },
+    "./toolbar": {
+      "source": "./src/components/toolbar/Toolbar.vue",
+      "import": "./dist/toolbar.es.js"
+    },
+    "./super-input": {
+      "source": "./src/components/SuperInput.vue",
+      "import": "./dist/super-input.es.js"
+    },
+    "./editor": {
+      "source": "./src/core/Editor.ts",
+      "import": "./dist/super-editor.es.js"
+    },
+    "./file-zipper": {
+      "source": "./src/core/super-converter/zipper.js",
+      "import": "./dist/file-zipper.es.js"
+    },
+    "./ai-writer": {
+      "source": "./src/core/components/AIWriter.vue",
+      "import": "./dist/ai-writer.es.js"
+    },
+    "./style.css": {
+      "source": "./src/style.css",
+      "import": "./dist/style.css"
+    },
+    "./presentation-editor": {
+      "source": "./src/index.js",
+      "import": "./dist/super-editor.es.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/super-editor.es.js",
+  "module": "./dist/super-editor.es.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:watch": "vite build --watch",
+    "types:check": "tsc --noEmit",
+    "types:build": "tsc -p tsconfig.build.json",
+    "test": "vitest",
+    "test:debug": "vitest --inspect-brk --pool threads --poolOptions.threads.singleThread",
+    "preview": "vite preview",
+    "clean": "rm -rf dist types",
+    "pack": "rm *.tgz 2>/dev/null || true && pnpm run build && pnpm pack && mv harbour-enterprises-super-editor-0.0.1-alpha.0.tgz ./super-editor.tgz"
+  },
+  "dependencies": {
+    "buffer-crc32": "catalog:",
+    "color2k": "catalog:",
+    "eventemitter3": "catalog:",
+    "he": "catalog:",
+    "jszip": "catalog:",
+    "marked": "catalog:",
+    "prosemirror-commands": "catalog:",
+    "prosemirror-dropcursor": "catalog:",
+    "prosemirror-gapcursor": "catalog:",
+    "prosemirror-history": "catalog:",
+    "prosemirror-inputrules": "catalog:",
+    "prosemirror-keymap": "catalog:",
+    "prosemirror-model": "catalog:",
+    "prosemirror-schema-basic": "catalog:",
+    "prosemirror-schema-list": "catalog:",
+    "prosemirror-state": "catalog:",
+    "prosemirror-tables": "catalog:",
+    "prosemirror-transform": "catalog:",
+    "prosemirror-view": "catalog:",
+    "rehype-parse": "catalog:",
+    "rehype-remark": "catalog:",
+    "remark-gfm": "catalog:",
+    "remark-stringify": "catalog:",
+    "unified": "catalog:",
+    "uuid": "catalog:",
+    "vue": "catalog:",
+    "xml-js": "catalog:"
+  },
+  "peerDependencies": {
+    "@floating-ui/dom": "^1.7.0",
+    "naive-ui": "^2.38.2",
+    "tippy.js": "^6.3.7",
+    "y-prosemirror": "catalog:",
+    "yjs": "catalog:"
+  },
+  "devDependencies": {
+    "@floating-ui/dom": "catalog:",
+    "@superdoc/common": "workspace:*",
+    "@superdoc/contracts": "workspace:*",
+    "@superdoc/layout-bridge": "workspace:*",
+    "@superdoc/measuring-dom": "workspace:*",
+    "@superdoc/painter-dom": "workspace:*",
+    "@superdoc/pm-adapter": "workspace:*",
+    "@superdoc/preset-geometry": "workspace:*",
+    "@superdoc/style-engine": "workspace:*",
+    "@superdoc/url-validation": "workspace:*",
+    "@superdoc/word-layout": "workspace:*",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "canvas": "catalog:",
+    "happy-dom": "catalog:",
+    "postcss-nested": "catalog:",
+    "postcss-nested-import": "catalog:",
+    "prosemirror-test-builder": "catalog:",
+    "tippy.js": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-node-polyfills": "catalog:",
+    "vitest": "catalog:",
+    "y-protocols": "catalog:"
+  }
+}
