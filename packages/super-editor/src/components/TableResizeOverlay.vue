@@ -248,7 +248,7 @@ const overlayStyle = computed(() => {
 });
 
 /**
- * Recompute overlay position/size relative to the table's offset parent.
+ * Recompute overlay position/size relative to .super-editor container.
  * Keeps handles aligned when the table moves (scroll, relayout, pagination shifts).
  */
 function updateOverlayRect() {
@@ -257,19 +257,18 @@ function updateOverlayRect() {
     return;
   }
 
-  const parent = props.tableElement.offsetParent;
   const tableRect = props.tableElement.getBoundingClientRect();
 
-  // Validate rect has non-zero dimensions
   if (tableRect.width === 0 || tableRect.height === 0) {
     overlayRect.value = null;
     return;
   }
 
-  if (parent) {
-    const parentRect = parent.getBoundingClientRect();
-    const left = tableRect.left - parentRect.left + (parent.scrollLeft || 0);
-    const top = tableRect.top - parentRect.top + (parent.scrollTop || 0);
+  const superEditor = props.tableElement.closest('.super-editor');
+  if (superEditor) {
+    const containerRect = superEditor.getBoundingClientRect();
+    const left = tableRect.left - containerRect.left + superEditor.scrollLeft;
+    const top = tableRect.top - containerRect.top + superEditor.scrollTop;
     overlayRect.value = {
       left,
       top,
@@ -277,7 +276,6 @@ function updateOverlayRect() {
       height: tableRect.height,
     };
   } else {
-    // Fallback to offsets if no positioned parent is found
     overlayRect.value = {
       left: props.tableElement.offsetLeft,
       top: props.tableElement.offsetTop,
