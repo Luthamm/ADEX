@@ -278,6 +278,102 @@ Conversion formula: `pixels = twips / 15`
 
 ---
 
+## Table Cell Shading
+
+Cell background colors come from the `<w:shd>` element in DOCX.
+
+### Shading Attributes
+
+| Attribute | Purpose |
+|-----------|---------|
+| `w:fill` | Direct hex color (e.g., "FF0000") |
+| `w:themeFill` | Theme color reference (e.g., "accent1") |
+| `w:themeFillTint` | Tint modifier (hex 00-FF) |
+| `w:themeFillShade` | Shade modifier (hex 00-FF) |
+| `w:val` | Pattern type (e.g., "clear", "pct25") |
+
+### Import Flow
+
+1. `shd-translator.js` extracts all attributes
+2. `legacy-handle-table-cell-node.js` calls `resolveShadingFillColor()`
+3. Theme colors resolved via `themeColors` from document theme
+4. Result stored in `background.color` attribute
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `helpers.js` | `resolveShadingFillColor()` - resolves fill color |
+| `legacy-handle-table-cell-node.js` | Applies background to cell |
+| `docxImporter.js` | `getThemeColorPalette()` extracts theme |
+
+### Theme Color Resolution
+
+Theme colors are resolved by:
+1. Looking up `themeFill` in the document's theme palette
+2. Applying tint: `result = color + (255 - color) * (1 - tintValue/255)`
+3. Applying shade: `result = color * (shadeValue/255)`
+
+---
+
+## Table Resize Handles
+
+Interactive column resizing uses a Vue overlay component.
+
+### Architecture
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `TableResizeOverlay.vue` | `super-editor/src/components/` | Renders handles |
+| `SuperEditor.vue` | `super-editor/src/components/` | Hover detection |
+
+### How It Works
+
+1. Mouse moves over table → `isNearColumnBoundary()` checks proximity
+2. If near boundary, overlay becomes visible
+3. Overlay positions itself relative to `.super-editor` container
+4. Handles positioned using `data-table-boundaries` metadata from table
+5. Drag updates column widths via ProseMirror transaction
+
+### Positioning
+
+The overlay uses `getBoundingClientRect()` to position relative to `.super-editor`:
+```javascript
+const superEditor = tableElement.closest('.super-editor');
+const containerRect = superEditor.getBoundingClientRect();
+const left = tableRect.left - containerRect.left + superEditor.scrollLeft;
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `TableResizeOverlay.vue` | Handle rendering and drag logic |
+| `renderTableFragment.ts` | Embeds `data-table-boundaries` metadata |
+
+---
+
+## Editing Cell Background
+
+Cell background can be changed via `editor.commands.setCellBackground(color)`.
+
+### Toolbar Integration
+
+The "Cell Background" button appears in the toolbar when cursor is in a table:
+- Defined in `defaultItems.js` as `cellBackground`
+- Uses color picker from `color-dropdown-helpers.js`
+- Enabled/disabled via `isInTable()` check in `super-toolbar.js`
+
+### Command Flow
+
+1. User selects color from dropdown
+2. `setCellBackground` command called (defined in `table.js`)
+3. Command calls `setCellAttr('background', { color })`
+4. ProseMirror transaction updates cell attribute
+5. Both editing and presentation modes re-render
+
+---
+
 ## Debugging Table Issues
 
 ### Common Problems and Where to Look
@@ -289,6 +385,9 @@ Conversion formula: `pixels = twips / 15`
 | Borders missing | `tblPr-translator.js`, style resolution |
 | Rows wrong height | `table.ts` (normalizeRowHeight in pm-adapter) |
 | Table layout broken | `table.ts` (pm-adapter converter) |
+| Cell shading missing | `helpers.js` (resolveShadingFillColor), `legacy-handle-table-cell-node.js` |
+| Theme colors not resolving | `docxImporter.js` (themeColors param), `helpers.js` |
+| Resize handles misaligned | `TableResizeOverlay.vue` (updateOverlayRect) |
 | Rendering issues | `painters/dom/src/table/` |
 
 ### Test Files

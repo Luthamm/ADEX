@@ -572,6 +572,38 @@ export const makeDefaultItems = ({
     });
   }
 
+  const cellBackground = useToolbarItem({
+    type: 'dropdown',
+    name: 'cellBackground',
+    icon: toolbarIcons.cellBackground,
+    hideLabel: true,
+    active: false,
+    disabled: true,
+    tooltip: toolbarTexts.cellBackground,
+    command: 'setCellBackground',
+    suppressActiveHighlight: true,
+    attributes: {
+      ariaLabel: 'Cell background',
+    },
+    options: [
+      {
+        key: 'cellBackgroundColor',
+        type: 'render',
+        render: () => renderColorOptions(superToolbar, cellBackground, [], true),
+      },
+    ],
+    onActivate: ({ background }) => {
+      cellBackground.disabled.value = false;
+      if (background?.color) {
+        cellBackground.iconColor.value = `#${background.color}`;
+      }
+    },
+    onDeactivate: () => {
+      cellBackground.disabled.value = true;
+      cellBackground.iconColor.value = '';
+    },
+  });
+
   // alignment
   const alignment = useToolbarItem({
     type: 'dropdown',
@@ -1080,6 +1112,7 @@ export const makeDefaultItems = ({
     image,
     tableItem,
     tableActionsItem,
+    cellBackground,
     separator,
     alignment,
     bulletedList,

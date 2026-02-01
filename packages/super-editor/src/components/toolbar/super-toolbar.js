@@ -1002,7 +1002,7 @@ export class SuperToolbar extends EventEmitter {
         }
       }
 
-      if (item.name.value === 'tableActions') {
+      if (item.name.value === 'tableActions' || item.name.value === 'cellBackground') {
         item.disabled.value = !inTable;
       }
 

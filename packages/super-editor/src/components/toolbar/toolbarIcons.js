@@ -104,6 +104,7 @@ export const toolbarIcons = {
   deleteTable: trashIconSvg,
   deleteBorders: borderNoneIconSvg,
   fixTables: wrenchIconSvg,
+  cellBackground: paintbrushSvg,
   lineHeight: upDownIconSvg,
   search: magnifyingGlassSvg,
   cut: scissorsIconSvg,

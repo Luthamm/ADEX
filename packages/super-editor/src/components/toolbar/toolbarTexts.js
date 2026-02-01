@@ -24,6 +24,7 @@ export const toolbarTexts = {
   mergeCells: 'Merge cells',
   splitCell: 'Split cell',
   fixTables: 'Fix tables',
+  cellBackground: 'Cell background',
   textAlign: 'Alignment',
   bulletList: 'Bullet list',
   numberedList: 'Numbered list',
