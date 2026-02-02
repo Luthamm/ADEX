@@ -60,3 +60,7 @@ e2e-tests/           Playwright tests
 - `pnpm build` - Build all packages
 - `pnpm test` - Run tests
 - `pnpm dev` - Start dev server (from examples/)
+
+## Development Workflow
+
+**Do NOT run builds, tests, or other bash commands.** The user will handle all building and testing manually.

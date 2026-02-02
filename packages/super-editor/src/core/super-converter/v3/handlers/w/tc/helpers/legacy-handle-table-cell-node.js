@@ -98,10 +98,51 @@ export function handleTableCellNode({
     }
   }
 
-  // Background
+  // Background - resolve shading with conditional formatting support
+  // Priority: inline cell shading > conditional style shading > table-level shading
   const themeColors = params.themeColors || null;
+
+  // Helper to check if a conditional style flag is enabled (cell > row > tableLook)
+  const cellCnfStyle = tableCellProperties?.cnfStyle;
+  const getFlag = (source, flag) =>
+    source && Object.prototype.hasOwnProperty.call(source, flag) ? source[flag] : undefined;
+  const isStyleEnabled = (flag) =>
+    getFlag(cellCnfStyle, flag) ?? getFlag(rowCnfStyle, flag) ?? getFlag(tableLook, flag) ?? true;
+
+  // Get shading from conditional styles (firstRow, lastRow, firstCol, lastCol, bands)
+  const getConditionalShading = () => {
+    // Check in priority order - more specific conditions first
+    if (isFirstRow && isStyleEnabled('firstRow')) {
+      const shading = referencedStyles?.firstRow?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    if (isLastRow && isStyleEnabled('lastRow')) {
+      const shading = referencedStyles?.lastRow?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    if (isFirstColumn && isStyleEnabled('firstColumn')) {
+      const shading = referencedStyles?.firstCol?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    if (isLastColumn && isStyleEnabled('lastColumn')) {
+      const shading = referencedStyles?.lastCol?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    // Banded rows (odd/even horizontal bands)
+    if (isStyleEnabled('oddHBand') && rowIndex % 2 === 1) {
+      const shading = referencedStyles?.band1Horz?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    if (isStyleEnabled('evenHBand') && rowIndex % 2 === 0 && rowIndex > 0) {
+      const shading = referencedStyles?.band2Horz?.tableCellProperties?.shading;
+      if (shading) return shading;
+    }
+    return null;
+  };
+
   const backgroundColor =
     resolveShadingFillColor(tableCellProperties.shading, themeColors) ??
+    resolveShadingFillColor(getConditionalShading(), themeColors) ??
     resolveShadingFillColor(tableProperties?.shading, themeColors);
   const background = { color: backgroundColor };
 

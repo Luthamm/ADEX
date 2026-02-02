@@ -1091,8 +1091,8 @@ export const makeDefaultItems = ({
 
     // Dev - tracked changes
     // toggleTrackChanges,
-    acceptTrackedChangeBySelection,
-    rejectTrackedChangeOnSelection,
+    // acceptTrackedChangeBySelection,
+    // rejectTrackedChangeOnSelection,
     // toggleTrackChangesOriginal,
     // toggleTrackChangesFinal,
 
