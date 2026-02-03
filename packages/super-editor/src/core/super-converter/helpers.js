@@ -381,6 +381,8 @@ const normalizeHexColor = (hex) => {
   if (!hex) return null;
   let value = hex.replace('#', '').trim();
   if (!value) return null;
+  // "auto" means transparent/no fill in OOXML
+  if (value.toLowerCase() === 'auto') return null;
   value = value.toUpperCase();
   if (value.length === 3)
     value = value

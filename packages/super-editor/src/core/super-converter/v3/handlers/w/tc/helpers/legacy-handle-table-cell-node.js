@@ -102,40 +102,82 @@ export function handleTableCellNode({
   // Priority: inline cell shading > conditional style shading > table-level shading
   const themeColors = params.themeColors || null;
 
-  // Helper to check if a conditional style flag is enabled (cell > row > tableLook)
+  // Helpers to check if conditional style flags are enabled
+  // Flags come as strings "0"/"1" from XML, need to convert to boolean
   const cellCnfStyle = tableCellProperties?.cnfStyle;
   const getFlag = (source, flag) =>
     source && Object.prototype.hasOwnProperty.call(source, flag) ? source[flag] : undefined;
-  const isStyleEnabled = (flag) =>
-    getFlag(cellCnfStyle, flag) ?? getFlag(rowCnfStyle, flag) ?? getFlag(tableLook, flag) ?? true;
+  const isFlagTrue = (val) => val === true || val === 1 || val === '1';
+
+  // Check if horizontal banding is enabled at table level
+  // tableLook uses noHBand (inverted: "1" means banding DISABLED)
+  const isHBandEnabled = !isFlagTrue(getFlag(tableLook, 'noHBand'));
+
+  // Row-level conditions (firstRow, lastRow) - check rowCnfStyle and tableLook
+  // Cell cnfStyle should NOT override row-level conditions
+  const isRowStyleEnabled = (flag) => {
+    const val = getFlag(rowCnfStyle, flag) ?? getFlag(tableLook, flag);
+    if (val === undefined) return true; // default enabled if not specified
+    return isFlagTrue(val);
+  };
+
+  // Column-level conditions (firstColumn, lastColumn) - check tableLook first (style toggle),
+  // then cellCnfStyle as a secondary check. tableLook controls whether the style is ENABLED
+  // at table level, while cellCnfStyle indicates which cells the style applies to.
+  const isColStyleEnabled = (flag) => {
+    // First check tableLook - this is the primary toggle for whether the style is enabled
+    const tableLookVal = getFlag(tableLook, flag);
+    if (tableLookVal !== undefined && !isFlagTrue(tableLookVal)) {
+      return false; // Explicitly disabled at table level
+    }
+    // If table level doesn't disable it, check cell cnfStyle for position confirmation
+    const cnfVal = getFlag(cellCnfStyle, flag);
+    if (cnfVal !== undefined) {
+      return isFlagTrue(cnfVal);
+    }
+    // Default: enabled if table level is enabled or unspecified
+    return true;
+  };
 
   // Get shading from conditional styles (firstRow, lastRow, firstCol, lastCol, bands)
+  // Important: Only return a shading if it resolves to an actual color.
+  // Shading with fill="auto" means "no fill" and should not prevent fallback to other styles.
+  const hasValidFill = (shading) => {
+    if (!shading) return false;
+    // Check if the shading has a fill that will resolve to an actual color
+    const color = resolveShadingFillColor(shading, themeColors);
+    return color !== null && color !== undefined;
+  };
+
   const getConditionalShading = () => {
     // Check in priority order - more specific conditions first
-    if (isFirstRow && isStyleEnabled('firstRow')) {
+    // Row-level conditions use isRowStyleEnabled (ignores cell cnfStyle)
+    if (isFirstRow && isRowStyleEnabled('firstRow')) {
       const shading = referencedStyles?.firstRow?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
-    if (isLastRow && isStyleEnabled('lastRow')) {
+    if (isLastRow && isRowStyleEnabled('lastRow')) {
       const shading = referencedStyles?.lastRow?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
-    if (isFirstColumn && isStyleEnabled('firstColumn')) {
+    // Column-level conditions use isColStyleEnabled
+    if (isFirstColumn && isColStyleEnabled('firstColumn')) {
       const shading = referencedStyles?.firstCol?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
-    if (isLastColumn && isStyleEnabled('lastColumn')) {
+    if (isLastColumn && isColStyleEnabled('lastColumn')) {
       const shading = referencedStyles?.lastCol?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
-    // Banded rows (odd/even horizontal bands)
-    if (isStyleEnabled('oddHBand') && rowIndex % 2 === 1) {
+    // Banded rows - only apply if banding is enabled at table level (noHBand != "1")
+    // AND the row's cnfStyle indicates it's in a banded position
+    if (isHBandEnabled && isFlagTrue(getFlag(rowCnfStyle, 'oddHBand'))) {
       const shading = referencedStyles?.band1Horz?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
-    if (isStyleEnabled('evenHBand') && rowIndex % 2 === 0 && rowIndex > 0) {
+    if (isHBandEnabled && isFlagTrue(getFlag(rowCnfStyle, 'evenHBand'))) {
       const shading = referencedStyles?.band2Horz?.tableCellProperties?.shading;
-      if (shading) return shading;
+      if (hasValidFill(shading)) return shading;
     }
     return null;
   };
@@ -400,12 +442,35 @@ const processCellBorders = ({
 
   const getStyleTableCellBorders = (styleVariant) => styleVariant?.tableCellProperties?.borders ?? null;
 
-  // Check if a conditional style flag is enabled using cascading priority: cell > row > tableLook
+  // Helpers to check if conditional style flags are enabled
+  // Flags come as strings "0"/"1" from XML, need to convert to boolean
   const cellCnfStyle = tableCellProperties?.cnfStyle;
   const getFlag = (source, flag) =>
     source && Object.prototype.hasOwnProperty.call(source, flag) ? source[flag] : undefined;
-  const isStyleEnabled = (flag) =>
-    getFlag(cellCnfStyle, flag) ?? getFlag(rowCnfStyle, flag) ?? getFlag(tableLook, flag) ?? true;
+  const isFlagTrue = (val) => val === true || val === 1 || val === '1';
+
+  // Row-level conditions - check rowCnfStyle and tableLook only
+  const isRowStyleEnabled = (flag) => {
+    const val = getFlag(rowCnfStyle, flag) ?? getFlag(tableLook, flag);
+    if (val === undefined) return true;
+    return isFlagTrue(val);
+  };
+
+  // Column-level conditions - check tableLook first (style toggle), then cellCnfStyle
+  const isColStyleEnabled = (flag) => {
+    // First check tableLook - this is the primary toggle for whether the style is enabled
+    const tableLookVal = getFlag(tableLook, flag);
+    if (tableLookVal !== undefined && !isFlagTrue(tableLookVal)) {
+      return false; // Explicitly disabled at table level
+    }
+    // If table level doesn't disable it, check cell cnfStyle for position confirmation
+    const cnfVal = getFlag(cellCnfStyle, flag);
+    if (cnfVal !== undefined) {
+      return isFlagTrue(cnfVal);
+    }
+    // Default: enabled if table level is enabled or unspecified
+    return true;
+  };
 
   // Apply table style conditional formatting borders.
   // Only apply the relevant edge per conditional style:
@@ -422,10 +487,12 @@ const processCellBorders = ({
     if (styleOverrides) cellBorders = Object.assign(cellBorders, styleOverrides);
   };
 
-  if (isFirstRow && isStyleEnabled('firstRow')) applyStyleBorders(referencedStyles?.firstRow, ['top', 'bottom']);
-  if (isLastRow && isStyleEnabled('lastRow')) applyStyleBorders(referencedStyles?.lastRow, ['top', 'bottom']);
-  if (isFirstColumn && isStyleEnabled('firstColumn')) applyStyleBorders(referencedStyles?.firstCol, ['left', 'right']);
-  if (isLastColumn && isStyleEnabled('lastColumn')) applyStyleBorders(referencedStyles?.lastCol, ['left', 'right']);
+  // Row-level conditions use isRowStyleEnabled, column-level use isColStyleEnabled
+  if (isFirstRow && isRowStyleEnabled('firstRow')) applyStyleBorders(referencedStyles?.firstRow, ['top', 'bottom']);
+  if (isLastRow && isRowStyleEnabled('lastRow')) applyStyleBorders(referencedStyles?.lastRow, ['top', 'bottom']);
+  if (isFirstColumn && isColStyleEnabled('firstColumn'))
+    applyStyleBorders(referencedStyles?.firstCol, ['left', 'right']);
+  if (isLastColumn && isColStyleEnabled('lastColumn')) applyStyleBorders(referencedStyles?.lastCol, ['left', 'right']);
 
   // Process inline cell borders (cell-level overrides)
   const inlineBorders = processInlineCellBorders(tableCellProperties.borders, cellBorders);
