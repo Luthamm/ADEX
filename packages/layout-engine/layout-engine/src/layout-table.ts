@@ -3,6 +3,7 @@ import type {
   TableMeasure,
   TableFragment,
   TableColumnBoundary,
+  TableRowBoundary,
   TableFragmentMetadata,
   TableRowMeasure,
   TableRow,
@@ -222,6 +223,40 @@ function generateColumnBoundaries(measure: TableMeasure): TableColumnBoundary[] 
     boundaries.push(boundary);
 
     xPosition += width;
+  }
+
+  return boundaries;
+}
+
+/**
+ * Generate row boundary metadata for interactive table row resizing.
+ *
+ * Creates metadata that enables the overlay component to position row resize handles
+ * and enforce minimum height constraints during drag operations.
+ *
+ * @param measure - Table measurement containing row heights
+ * @param fromRow - Starting row index (inclusive) for this fragment
+ * @param toRow - Ending row index (exclusive) for this fragment
+ * @returns Array of row boundary metadata for rows in the fragment range
+ */
+function generateRowBoundaries(measure: TableMeasure, fromRow: number, toRow: number): TableRowBoundary[] {
+  const DEFAULT_MIN_HEIGHT = 10;
+  const boundaries: TableRowBoundary[] = [];
+  let yPosition = 0;
+
+  for (let i = fromRow; i < toRow && i < measure.rows.length; i++) {
+    const rowMeasure = measure.rows[i];
+    if (!rowMeasure) continue;
+
+    boundaries.push({
+      index: i,
+      y: yPosition,
+      height: rowMeasure.height,
+      minHeight: DEFAULT_MIN_HEIGHT,
+      resizable: true,
+    });
+
+    yPosition += rowMeasure.height;
   }
 
   return boundaries;
@@ -937,12 +972,13 @@ function findSplitPoint(
  */
 function generateFragmentMetadata(
   measure: TableMeasure,
-  _fromRow: number,
-  _toRow: number,
+  fromRow: number,
+  toRow: number,
   _repeatHeaderCount: number,
 ): TableFragmentMetadata {
   return {
     columnBoundaries: generateColumnBoundaries(measure),
+    rowBoundaries: generateRowBoundaries(measure, fromRow, toRow),
     coordinateSystem: 'fragment',
   };
 }

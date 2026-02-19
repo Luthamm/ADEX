@@ -11,6 +11,7 @@ import Ruler from './rulers/Ruler.vue';
 import GenericPopover from './popovers/GenericPopover.vue';
 import LinkInput from './toolbar/LinkInput.vue';
 import TableResizeOverlay from './TableResizeOverlay.vue';
+import TableRowResizeOverlay from './TableRowResizeOverlay.vue';
 import ImageResizeOverlay from './ImageResizeOverlay.vue';
 import LinkClickHandler from './link-click/LinkClickHandler.vue';
 import { checkNodeSpecificClicks } from './cursor-helpers.js';
@@ -304,6 +305,14 @@ const tableResizeState = reactive({
 });
 
 /**
+ * Table row resize overlay state management
+ */
+const tableRowResizeState = reactive({
+  visible: false,
+  tableElement: null,
+});
+
+/**
  * Image resize overlay state management
  */
 interface ImageResizeState {
@@ -552,6 +561,110 @@ const hideTableResizeOverlay = () => {
 };
 
 /**
+ * Threshold in pixels for showing table row resize handles.
+ * Handles only appear when mouse is within this distance of a row boundary.
+ * In screen space (zoomed pixels).
+ */
+const TABLE_ROW_RESIZE_HOVER_THRESHOLD = 8;
+
+/**
+ * Timestamp of last updateTableRowResizeOverlay execution for throttling.
+ */
+let lastUpdateTableRowResizeTimestamp = 0;
+
+/**
+ * Check if mouse position is near any row boundary in the table.
+ * Returns true if within threshold of a row's bottom edge.
+ *
+ * @param {MouseEvent} event - The mouse event
+ * @param {HTMLElement} tableElement - The table DOM element with data-table-boundaries attribute
+ * @returns {boolean} True if the mouse is near a row boundary
+ */
+const isNearRowBoundary = (event, tableElement) => {
+  if (!event || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') return false;
+  if (!tableElement || !(tableElement instanceof HTMLElement)) return false;
+
+  const boundariesAttr = tableElement.getAttribute('data-table-boundaries');
+  if (!boundariesAttr) return false;
+
+  try {
+    const metadata = JSON.parse(boundariesAttr);
+    if (!metadata.rows || !Array.isArray(metadata.rows)) return false;
+
+    const zoom = getEditorZoom();
+    const tableRect = tableElement.getBoundingClientRect();
+    const mouseXScreen = event.clientX - tableRect.left;
+    const mouseYScreen = event.clientY - tableRect.top;
+
+    // Only detect when mouse is within horizontal bounds of the table
+    if (mouseXScreen < 0 || mouseXScreen > tableRect.width) return false;
+
+    for (const row of metadata.rows) {
+      if (!row || typeof row.y !== 'number' || typeof row.h !== 'number') continue;
+      if (row.r !== 1) continue; // Skip non-resizable rows
+
+      // The boundary is at the bottom edge of the row (y + h)
+      const boundaryYScreen = (row.y + row.h) * zoom;
+
+      if (Math.abs(mouseYScreen - boundaryYScreen) <= TABLE_ROW_RESIZE_HOVER_THRESHOLD) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Update table row resize overlay visibility based on mouse position.
+ * Shows overlay only when hovering near row boundaries.
+ * Throttled to run at most once per TABLE_RESIZE_THROTTLE_MS milliseconds.
+ *
+ * @param {MouseEvent} event - The mouse event
+ */
+const updateTableRowResizeOverlay = (event) => {
+  const now = Date.now();
+  if (now - lastUpdateTableRowResizeTimestamp < TABLE_RESIZE_THROTTLE_MS) {
+    return;
+  }
+  lastUpdateTableRowResizeTimestamp = now;
+
+  if (!editorElem.value) return;
+
+  let target = event.target;
+  while (target && target !== editorElem.value) {
+    if (target.classList?.contains('superdoc-table-row-resize-overlay')) {
+      return; // Keep overlay visible
+    }
+
+    if (target.classList?.contains('superdoc-table-fragment') && target.hasAttribute('data-table-boundaries')) {
+      if (isNearRowBoundary(event, target)) {
+        tableRowResizeState.visible = true;
+        tableRowResizeState.tableElement = target;
+      } else {
+        tableRowResizeState.visible = false;
+        tableRowResizeState.tableElement = null;
+      }
+      return;
+    }
+    target = target.parentElement;
+  }
+
+  tableRowResizeState.visible = false;
+  tableRowResizeState.tableElement = null;
+};
+
+/**
+ * Hide table row resize overlay (on mouse leave)
+ */
+const hideTableRowResizeOverlay = () => {
+  tableRowResizeState.visible = false;
+  tableRowResizeState.tableElement = null;
+};
+
+/**
  * Update image resize overlay visibility based on mouse position.
  * Shows overlay when hovering over images with data-image-metadata attribute.
  * Supports both standalone image fragments (ImageBlock) and inline images (ImageRun).
@@ -661,18 +774,20 @@ const setSelectedImage = (element, blockId, pmStart) => {
 };
 
 /**
- * Combined handler to update both table and image resize overlays
+ * Combined handler to update table, table row, and image resize overlays
  */
 const handleOverlayUpdates = (event) => {
   updateTableResizeOverlay(event);
+  updateTableRowResizeOverlay(event);
   updateImageResizeOverlay(event);
 };
 
 /**
- * Combined handler to hide both overlays
+ * Combined handler to hide all overlays
  */
 const handleOverlayHide = () => {
   hideTableResizeOverlay();
+  hideTableRowResizeOverlay();
   hideImageResizeOverlay();
 };
 
@@ -1097,6 +1212,13 @@ onBeforeUnmount(() => {
         :editor="activeEditor"
         :visible="tableResizeState.visible"
         :tableElement="tableResizeState.tableElement"
+      />
+      <!-- Table row resize overlay for interactive row height resizing -->
+      <TableRowResizeOverlay
+        v-if="editorReady && activeEditor"
+        :editor="activeEditor"
+        :visible="tableRowResizeState.visible"
+        :tableElement="tableRowResizeState.tableElement"
       />
       <!-- Image resize overlay for interactive image resizing -->
       <ImageResizeOverlay

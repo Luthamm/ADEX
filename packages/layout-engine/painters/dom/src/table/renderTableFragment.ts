@@ -242,7 +242,7 @@ export const renderTableFragment = (deps: TableRenderDependencies): HTMLElement 
       rowY += rowMeasure.height;
     }
 
-    const metadata = {
+    const metadata: Record<string, unknown> = {
       columns: fragment.metadata.columnBoundaries.map((boundary) => ({
         i: boundary.index,
         x: boundary.x,
@@ -259,6 +259,17 @@ export const renderTableFragment = (deps: TableRenderDependencies): HTMLElement 
         })),
       ),
     };
+
+    // Add row boundaries for interactive row height resizing
+    if (fragment.metadata.rowBoundaries && fragment.metadata.rowBoundaries.length > 0) {
+      metadata.rows = fragment.metadata.rowBoundaries.map((boundary) => ({
+        i: boundary.index,
+        y: boundary.y,
+        h: boundary.height,
+        min: boundary.minHeight,
+        r: boundary.resizable ? 1 : 0,
+      }));
+    }
 
     container.setAttribute('data-table-boundaries', JSON.stringify(metadata));
   }
