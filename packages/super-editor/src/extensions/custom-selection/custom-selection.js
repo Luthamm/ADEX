@@ -154,12 +154,6 @@ export const CustomSelection = Extension.create({
       props: {
         handleDOMEvents: {
           contextmenu: (view, event) => {
-            if (shouldAllowNativeContextMenu(event)) {
-              return false;
-            }
-
-            // Prevent context menu from removing focus/selection
-            event.preventDefault();
             const { selection } = view.state;
             if (!selection.empty) {
               view.dispatch(
@@ -171,12 +165,6 @@ export const CustomSelection = Extension.create({
                 }),
               );
             }
-
-            // Re-focus the editor to maintain selection visibility
-            setTimeout(() => {
-              view.focus();
-            }, 0);
-
             return false;
           },
 

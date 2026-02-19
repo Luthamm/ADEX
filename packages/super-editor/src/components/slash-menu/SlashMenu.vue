@@ -441,12 +441,7 @@ onMounted(() => {
   };
   props.editor.on('slashMenu:open', slashMenuOpenHandler);
 
-  // Attach context menu to the active surface (flow view.dom or presentation host)
   contextMenuTarget = getEditorSurfaceElement(props.editor);
-  if (contextMenuTarget) {
-    contextMenuTarget.addEventListener('contextmenu', handleRightClickCapture, true);
-    contextMenuTarget.addEventListener('contextmenu', handleRightClick);
-  }
 
   slashMenuCloseHandler = () => {
     cleanupCustomItems();
@@ -474,8 +469,7 @@ onBeforeUnmount(() => {
         props.editor.off('slashMenu:close', slashMenuCloseHandler);
       }
       props.editor.off('update', handleEditorUpdate);
-      contextMenuTarget?.removeEventListener('contextmenu', handleRightClickCapture, true);
-      contextMenuTarget?.removeEventListener('contextmenu', handleRightClick);
+      contextMenuTarget = null;
     } catch (error) {
       console.warn('[SlashMenu] Error during cleanup:', error);
     }
