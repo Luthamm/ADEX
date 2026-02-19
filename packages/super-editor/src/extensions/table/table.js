@@ -207,6 +207,7 @@ import {
 } from 'prosemirror-tables';
 import { cellAround } from './tableHelpers/cellAround.js';
 import { cellWrapping } from './tableHelpers/cellWrapping.js';
+import { tableCellSelectionPlugin } from './tableHelpers/tableCellSelectionPlugin.js';
 import {
   resolveTable,
   pickTemplateRowForAppend,
@@ -1119,6 +1120,35 @@ export const Table = Node.create({
       'Mod-Backspace': deleteTableWhenSelected,
       Delete: deleteTableWhenSelected,
       'Mod-Delete': deleteTableWhenSelected,
+      Escape: ({ editor }) => {
+        const { state } = editor;
+        const { selection } = state;
+
+        // TextSelection inside table → select the cell
+        if (selection instanceof TextSelection) {
+          const $cell = cellAround(selection.$head);
+          if ($cell) {
+            const tr = state.tr.setSelection(CellSelection.create(state.doc, $cell.pos));
+            editor.view.dispatch(tr);
+            return true;
+          }
+        }
+
+        // CellSelection → move cursor after the table
+        if (isCellSelection(selection)) {
+          const $anchor = selection.$anchorCell;
+          for (let d = $anchor.depth; d > 0; d--) {
+            if ($anchor.node(d).type.spec.tableRole === 'table') {
+              const after = $anchor.after(d);
+              const tr = state.tr.setSelection(TextSelection.create(state.doc, after));
+              editor.view.dispatch(tr);
+              return true;
+            }
+          }
+        }
+
+        return false;
+      },
     };
   },
 
@@ -1146,6 +1176,8 @@ export const Table = Node.create({
             }),
           ]
         : []),
+
+      tableCellSelectionPlugin(),
 
       tableEditing({
         // @ts-expect-error - Options types will be fixed in TS migration
