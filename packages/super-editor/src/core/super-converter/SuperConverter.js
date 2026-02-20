@@ -1284,6 +1284,94 @@ class SuperConverter {
   }
 
   /**
+   * Builds a ProseMirror JSON document containing a single 3-column invisible table
+   * matching Word's default header/footer ghost table layout. The table spans the full
+   * content width with columns aligned left, center, and right.
+   *
+   * @returns {{ type: 'doc', content: Array }} ProseMirror document JSON
+   */
+  #createGhostTableDoc() {
+    const pageWidth = this.pageStyles?.pageSize?.width ?? 8.5;
+    const marginLeft = this.pageStyles?.pageMargins?.left ?? 1;
+    const marginRight = this.pageStyles?.pageMargins?.right ?? 1;
+
+    const contentWidthInches = pageWidth - marginLeft - marginRight;
+    const contentWidthTwips = contentWidthInches * 1440;
+    const contentWidthPx = contentWidthInches * 96;
+
+    const colTwips = Math.floor(contentWidthTwips / 3);
+    const colPx = Math.floor(contentWidthPx / 3);
+    // Third column absorbs rounding remainder
+    const lastColTwips = contentWidthTwips - colTwips * 2;
+    const lastColPx = contentWidthPx - colPx * 2;
+
+    const noBorder = { val: 'none', size: 0, space: 0, color: 'auto' };
+    const cellBorders = {
+      top: { ...noBorder },
+      right: { ...noBorder },
+      bottom: { ...noBorder },
+      left: { ...noBorder },
+    };
+
+    const makeCell = (width, widthTwips, justification) => ({
+      type: 'tableCell',
+      attrs: {
+        colspan: 1,
+        rowspan: 1,
+        colwidth: [width],
+        borders: { ...cellBorders },
+        widthType: 'dxa',
+        widthUnit: 'px',
+        cellMargins: {},
+        tableCellProperties: {
+          cellWidth: { value: widthTwips, type: 'dxa' },
+        },
+      },
+      content: [
+        {
+          type: 'paragraph',
+          attrs: {
+            paragraphProperties: { justification },
+          },
+          content: [],
+        },
+      ],
+    });
+
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          attrs: {
+            tableProperties: {
+              tableWidth: { value: Math.round(contentWidthTwips), type: 'dxa' },
+            },
+            grid: [{ col: colTwips }, { col: colTwips }, { col: lastColTwips }],
+            tableWidth: { width: Math.round(contentWidthPx), type: 'dxa' },
+            borders: {},
+            borderCollapse: 'collapse',
+            tableLayout: 'fixed',
+          },
+          content: [
+            {
+              type: 'tableRow',
+              attrs: {
+                tableRowProperties: {},
+              },
+              content: [
+                makeCell(colPx, colTwips, 'left'),
+                makeCell(colPx, colTwips, 'center'),
+                makeCell(lastColPx, lastColTwips, 'right'),
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  /**
    * Creates a default empty header for the specified variant.
    *
    * This method programmatically creates a new header section with an empty ProseMirror
@@ -1324,19 +1412,11 @@ class SuperConverter {
     // Generate relationship ID
     const rId = `rId-header-${variant}`;
 
-    // Create empty ProseMirror document
-    const emptyDoc = {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [],
-        },
-      ],
-    };
+    // Create ghost table ProseMirror document (3-column invisible table like Word)
+    const doc = this.#createGhostTableDoc();
 
     // Add to headers map
-    this.headers[rId] = emptyDoc;
+    this.headers[rId] = doc;
 
     // Update headerIds for the variant
     this.headerIds[variant] = rId;
@@ -1397,19 +1477,11 @@ class SuperConverter {
     // Generate relationship ID
     const rId = `rId-footer-${variant}`;
 
-    // Create empty ProseMirror document
-    const emptyDoc = {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [],
-        },
-      ],
-    };
+    // Create ghost table ProseMirror document (3-column invisible table like Word)
+    const doc = this.#createGhostTableDoc();
 
     // Add to footers map
-    this.footers[rId] = emptyDoc;
+    this.footers[rId] = doc;
 
     // Update footerIds for the variant
     this.footerIds[variant] = rId;

@@ -2381,6 +2381,12 @@ export function layoutHeaderFooter(
             bottom += sum;
           }
         }
+      } else if (fragment.kind === 'table') {
+        const tableHeight =
+          typeof fragment.height === 'number'
+            ? fragment.height
+            : ((measure as TableMeasure | undefined)?.totalHeight ?? 0);
+        bottom += tableHeight;
       }
 
       if (bottom > maxY) maxY = bottom;
@@ -2529,6 +2535,12 @@ const _computeContentBounds = (
             fragmentBottom += sumLineHeights(item.paragraph, fragment.fromLine, fragment.toLine);
           }
         }
+      } else if (fragment.kind === 'table') {
+        const tableHeight =
+          typeof fragment.height === 'number'
+            ? fragment.height
+            : ((measure as TableMeasure | undefined)?.totalHeight ?? 0);
+        fragmentBottom += tableHeight;
       }
 
       if (fragmentBottom > maxY) {

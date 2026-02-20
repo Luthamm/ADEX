@@ -88,3 +88,23 @@
   display: block;
   height: 0;
 }
+
+/* Ghost table: fixed layout so cells keep their widths and constrain content */
+.superdoc-header-editor-host table,
+.superdoc-footer-editor-host table {
+  table-layout: fixed !important;
+}
+
+/* Ghost table gridlines visible during header/footer editing */
+.superdoc-header-editor-host td,
+.superdoc-footer-editor-host td {
+  border: 1px dotted #d0d0d0 !important;
+  overflow: hidden;
+}
+
+/* Constrain images to cell width in header/footer tables */
+.superdoc-header-editor-host td img,
+.superdoc-footer-editor-host td img {
+  max-width: 100% !important;
+  height: auto !important;
+}
