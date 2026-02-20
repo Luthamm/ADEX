@@ -731,11 +731,11 @@ export const translateFormatChangesToEnglish = (attrs = {}) => {
  * @returns {String} The color to use for the highlight
  */
 
-/** Default opacity for active comment highlights (0x44/0xff ≈ 0.267) */
-const DEFAULT_ACTIVE_ALPHA = 0x44 / 0xff;
+/** Default opacity for active comment highlights (0x80/0xff ≈ 0.502) */
+const DEFAULT_ACTIVE_ALPHA = 0x80 / 0xff;
 
-/** Default opacity for inactive comment highlights (0x22/0xff ≈ 0.133) */
-const DEFAULT_INACTIVE_ALPHA = 0x22 / 0xff;
+/** Default opacity for inactive comment highlights (0x24/0xff ≈ 0.141) */
+const DEFAULT_INACTIVE_ALPHA = 0x24 / 0xff;
 
 /**
  * Clamps an opacity value to the valid range [0, 1].

@@ -56,10 +56,18 @@ const handleFocusChange = (focused) => emit('focus', focused);
 <style scoped>
 .comment-entry {
   box-sizing: border-box;
-  border-radius: 8px;
+  border: 1px solid #d5d5d8;
+  background-color: #efefef;
+  border-radius: 5px;
+  padding: 8px;
   width: 100%;
   max-width: 100%;
   transition: all 250ms ease;
+}
+.comment-entry:focus-within {
+  outline: 1px solid #0241ed;
+  border-color: #0241ed;
+  background-color: white;
 }
 .internal-dropdown {
   display: inline-block;

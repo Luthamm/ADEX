@@ -49,13 +49,13 @@
 }
 
 .sd-button.primary {
-  background-color: #1355ff;
+  background-color: #0241ed;
   border: none;
   color: white;
 }
 
 .sd-button.primary:hover {
-  background-color: #0d3fcc;
+  background-color: #0233b8;
 }
 
 .sd-comment-box {
@@ -72,7 +72,7 @@
 
 .superdoc-field:focus,
 .superdoc-field:active {
-  border: 1px solid #1355ff;
+  border: 1px solid #0241ed;
 }
 
 .superdoc-field .ProseMirror {

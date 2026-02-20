@@ -30,14 +30,14 @@ const options = [
     key: 'internal',
     icon: renderIcon(superdocIcons.internal),
     iconString: superdocIcons.internal,
-    backgroundColor: '#CDE6E6',
+    backgroundColor: '#e8f4f4',
   },
   {
     label: 'External',
     key: 'external',
     icon: renderIcon(superdocIcons.external),
     iconString: superdocIcons.external,
-    backgroundColor: '#F5CFDA',
+    backgroundColor: '#fce8ee',
   },
 ];
 
@@ -151,7 +151,7 @@ onMounted(() => {
   display: inline-block;
   cursor: pointer;
   border-radius: 50px;
-  padding: 2px 8px;
+  padding: 1px 6px;
 }
 .internal-dropdown:hover {
   background-color: #f3f3f5;

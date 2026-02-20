@@ -317,8 +317,8 @@ export const CommentsPlugin = Extension.create({
           const highlightColors = editor.options.comments?.highlightColors || {};
           return {
             activeThreadId: null,
-            externalColor: highlightColors.external ?? '#B1124B',
-            internalColor: highlightColors.internal ?? '#078383',
+            externalColor: highlightColors.external ?? '#FFD400',
+            internalColor: highlightColors.internal ?? '#FFD400',
             decorations: DecorationSet.empty,
             allCommentPositions: {},
             allCommentIds: [],
@@ -489,10 +489,14 @@ export const CommentsPlugin = Extension.create({
                   editor,
                 });
 
+                const isActive = currentActiveThreadId === threadId;
+                const borderStyle = isActive
+                  ? 'border-bottom: 2px solid #FFD400;'
+                  : 'border-bottom: 2px solid rgba(255, 212, 0, 0.3);';
                 const deco = Decoration.inline(pos, pos + node.nodeSize, {
-                  style: `background-color: ${color};`,
+                  style: `background-color: ${color}; ${borderStyle} padding-bottom: 2px;`,
                   'data-thread-id': threadId,
-                  class: 'sd-editor-comment-highlight',
+                  class: `sd-editor-comment-highlight${isActive ? ' active' : ''}`,
                 });
 
                 // Ignore inner marks if we need to show an outer active one

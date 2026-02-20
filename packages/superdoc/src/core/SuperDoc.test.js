@@ -248,8 +248,8 @@ describe('SuperDoc core', () => {
 
     await flushMicrotasks();
 
-    expect(instance.config.user).toEqual(expect.objectContaining({ name: 'Default SuperDoc user', email: null }));
-    expect(instance.user).toEqual(expect.objectContaining({ name: 'Default SuperDoc user', email: null }));
+    expect(instance.config.user).toEqual(expect.objectContaining({ name: 'PMIRS User', email: null }));
+    expect(instance.user).toEqual(expect.objectContaining({ name: 'PMIRS User', email: null }));
   });
 
   it('warns when both document object and documents list provided', async () => {

@@ -62,6 +62,7 @@ import {
   ensureFieldAnnotationStyles,
   ensureImageSelectionStyles,
   ensureNativeSelectionStyles,
+  ensurePageNumberIndicatorStyles,
   type PageStyles,
 } from './styles.js';
 import { DOM_CLASS_NAMES } from './constants.js';
@@ -380,10 +381,10 @@ const DEFAULT_TAB_INTERVAL_PX = 48;
 const DEFAULT_PAGE_HEIGHT_PX = 1056;
 /** Default gap used when virtualization is enabled (kept in sync with PresentationEditor layout defaults). */
 const DEFAULT_VIRTUALIZED_PAGE_GAP = 72;
-const COMMENT_EXTERNAL_COLOR = '#B1124B';
-const COMMENT_INTERNAL_COLOR = '#078383';
-const COMMENT_INACTIVE_ALPHA = '40'; // ~25% for inactive
-const COMMENT_ACTIVE_ALPHA = '66'; // ~40% for active/selected
+const COMMENT_EXTERNAL_COLOR = '#FFD400';
+const COMMENT_INTERNAL_COLOR = '#FFD400';
+const COMMENT_INACTIVE_ALPHA = '24'; // ~14% for inactive
+const COMMENT_ACTIVE_ALPHA = '80'; // ~50% for active/selected
 
 type LinkRenderData = {
   href?: string;
@@ -1026,6 +1027,7 @@ export class DomPainter {
     ensureSdtContainerStyles(doc);
     ensureImageSelectionStyles(doc);
     ensureNativeSelectionStyles(doc);
+    ensurePageNumberIndicatorStyles(doc);
     if (this.options.ruler?.enabled) {
       ensureRulerStyles(doc);
     }
@@ -3764,6 +3766,14 @@ export class DomPainter {
 
     if (commentHighlight.color && !textRun.highlight && hasAnyComment) {
       (elem as HTMLElement).style.backgroundColor = commentHighlight.color;
+      // Add border-bottom indicator for comment highlights
+      const isActiveComment = commentHighlight.baseColor && commentHighlight.color.includes(COMMENT_ACTIVE_ALPHA);
+      if (isActiveComment) {
+        (elem as HTMLElement).style.borderBottom = `2px solid ${COMMENT_EXTERNAL_COLOR}`;
+      } else {
+        (elem as HTMLElement).style.borderBottom = `2px solid rgba(255, 212, 0, 0.3)`;
+      }
+      (elem as HTMLElement).style.paddingBottom = '2px';
       // Add thin visual indicator for nested comments when outer comment is selected
       // Use box-shadow instead of border to avoid affecting text layout
       if (commentHighlight.hasNestedComments && commentHighlight.baseColor) {

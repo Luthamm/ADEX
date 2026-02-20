@@ -62,11 +62,11 @@ const getStyle = (conversation) => {
   const placement = conversation.selection.selectionBounds;
   const top = (parseFloat(placement.top) + containerBounds.top) * activeZoom.value;
 
-  const internalHighlightColor = '#078383';
-  const externalHighlightColor = '#B1124B';
+  const internalHighlightColor = '#FFD400';
+  const externalHighlightColor = '#FFD400';
 
-  let opacity = '33';
-  activeComment.value === commentId ? (opacity = '66') : '33';
+  let opacity = '24';
+  activeComment.value === commentId ? (opacity = '80') : '24';
   let fillColor = conversation.isInternal ? internalHighlightColor : externalHighlightColor;
   fillColor += opacity;
 

@@ -58,6 +58,12 @@ const commentInput = ref(null);
 const commentDialogElement = ref(null);
 
 const isActiveComment = computed(() => activeComment.value === props.comment.commentId);
+
+const anchoredText = computed(() => {
+  if (props.comment.trackedChange) return null;
+  const text = commentsStore.getCommentAnchoredText(props.comment);
+  return text || null;
+});
 const showButtons = computed(() => {
   return (
     !getConfig.readOnly &&
@@ -369,6 +375,11 @@ onMounted(() => {
       />
     </div>
 
+    <!-- Quoted text blockquote showing the anchored/highlighted text -->
+    <div v-if="anchoredText" class="comment-quoted-text">
+      <span class="comment-quoted-text__content">{{ anchoredText }}</span>
+    </div>
+
     <!-- Comments and their threaded (sub) comments are rendered here -->
     <div v-for="(comment, index) in comments" :key="index" class="conversation-item">
       <CommentHeader
@@ -467,13 +478,14 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: 10px 15px;
-  border-radius: 12px;
-  background-color: #f3f6fd;
+  border-radius: 8px;
+  background-color: #fbfbfb;
+  border: 1px solid #d5d5d8;
   font-family: var(--sd-ui-font-family, Arial, Helvetica, sans-serif);
-  transition: background-color 250ms ease;
-  -webkit-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
-  -moz-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
-  box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  transition:
+    background-color 250ms ease,
+    border-color 250ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   z-index: 5;
   max-width: 300px;
   min-width: 200px;
@@ -481,6 +493,9 @@ onMounted(() => {
 }
 .is-active {
   z-index: 10;
+  border-color: #0241ed;
+  box-shadow: 0 0 0 1px rgba(2, 65, 237, 0.2);
+  background-color: white;
 }
 .input-section {
   margin-top: 10px;
@@ -490,8 +505,8 @@ onMounted(() => {
   margin-left: 5px;
 }
 .comment {
-  font-size: 13px;
-  margin: 10px 0;
+  font-size: 12px;
+  margin: 8px 0;
 }
 .is-resolved {
   background-color: #f0f0f0;
@@ -514,5 +529,22 @@ onMounted(() => {
 }
 .tracked-change {
   margin: 0;
+}
+.comment-quoted-text {
+  background: rgba(255, 212, 0, 0.15);
+  border-left: 2px solid #ffd400;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+}
+.comment-quoted-text__content {
+  font-size: 11px;
+  color: #444;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 </style>

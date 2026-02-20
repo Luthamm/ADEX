@@ -16,7 +16,7 @@ import { normalizeDocumentEntry } from './helpers/file.js';
 import { isAllowed } from './collaboration/permissions.js';
 
 const DEFAULT_USER = Object.freeze({
-  name: 'Default SuperDoc user',
+  name: 'PMIRS User',
   email: null,
 });
 

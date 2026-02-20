@@ -180,7 +180,7 @@ const getCurrentUser = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .comment-header-left {
   display: flex;
@@ -201,8 +201,8 @@ const getCurrentUser = computed(() => {
 }
 .user-timestamp {
   line-height: 1.2em;
-  font-size: 12px;
-  color: #999;
+  font-size: 10px;
+  color: #636363;
 }
 .overflow-menu {
   flex-shrink: 1;
@@ -222,7 +222,7 @@ const getCurrentUser = computed(() => {
   transition: all 250ms ease;
 }
 .overflow-menu__icon:hover {
-  background-color: #dbdbdb;
+  background-color: #ececec;
 }
 .overflow-menu__icon :deep(svg) {
   width: 100%;

@@ -572,6 +572,26 @@ const NATIVE_SELECTION_STYLES = `
 }
 `;
 
+const PAGE_NUMBER_INDICATOR_STYLES = `
+.superdoc-page::after {
+  content: attr(data-page-number);
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: #aaa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@media print {
+  .superdoc-page::after {
+    display: none;
+  }
+}
+`;
+
 let printStylesInjected = false;
 let linkStylesInjected = false;
 let trackChangeStylesInjected = false;
@@ -579,6 +599,7 @@ let sdtContainerStylesInjected = false;
 let fieldAnnotationStylesInjected = false;
 let imageSelectionStylesInjected = false;
 let nativeSelectionStylesInjected = false;
+let pageNumberIndicatorStylesInjected = false;
 
 export const ensurePrintStyles = (doc: Document | null | undefined) => {
   if (printStylesInjected || !doc) return;
@@ -659,4 +680,13 @@ export const ensureNativeSelectionStyles = (doc: Document | null | undefined): v
   styleEl.textContent = NATIVE_SELECTION_STYLES;
   doc.head?.appendChild(styleEl);
   nativeSelectionStylesInjected = true;
+};
+
+export const ensurePageNumberIndicatorStyles = (doc: Document | null | undefined): void => {
+  if (pageNumberIndicatorStylesInjected || !doc) return;
+  const styleEl = doc.createElement('style');
+  styleEl.setAttribute('data-superdoc-page-number-indicator-styles', 'true');
+  styleEl.textContent = PAGE_NUMBER_INDICATOR_STYLES;
+  doc.head?.appendChild(styleEl);
+  pageNumberIndicatorStylesInjected = true;
 };
