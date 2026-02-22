@@ -112,8 +112,8 @@ catalogs:
       specifier: ^5.0.1
       version: 5.0.1
     happy-dom:
-      specifier: ^20.3.4
-      version: 20.3.4
+      specifier: ^20.4.0
+      version: 20.4.0
     he:
       specifier: ^1.2.0
       version: 1.2.0
@@ -327,7 +327,7 @@ importers:
         version: 8.49.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       '@vitest/coverage-v8':
         specifier: 'catalog:'
-        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
       eslint:
         specifier: 'catalog:'
         version: 9.39.1(jiti@2.6.1)
@@ -345,7 +345,7 @@ importers:
         version: 54.7.0(eslint@9.39.1(jiti@2.6.1))
       happy-dom:
         specifier: 'catalog:'
-        version: 20.3.4
+        version: 20.4.0
       jsdom:
         specifier: 'catalog:'
         version: 27.3.0(canvas@3.2.0)(postcss@8.5.6)
@@ -378,7 +378,7 @@ importers:
         version: 0.24.0(patch_hash=b69b54a87bfd9531260555cfb2fda7c94e6f75c124e3a3fae26d64272bbe86ff)(rollup@4.53.3)(vite@7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
     optionalDependencies:
       canvas:
         specifier: 'catalog:'
@@ -492,7 +492,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
       vue:
         specifier: 'catalog:'
         version: 3.5.25(typescript@5.9.3)
@@ -517,7 +517,7 @@ importers:
         version: 8.49.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       '@vitest/coverage-v8':
         specifier: 'catalog:'
-        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
       concurrently:
         specifier: 'catalog:'
         version: 9.2.1
@@ -541,7 +541,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/esign:
     devDependencies:
@@ -592,7 +592,7 @@ importers:
         version: 4.5.4(@types/node@22.19.2)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/esign/demo:
     dependencies:
@@ -651,7 +651,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/layout-engine/layout-bridge:
     dependencies:
@@ -688,7 +688,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/layout-engine/layout-engine:
     dependencies:
@@ -734,7 +734,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/layout-engine/pm-adapter:
     dependencies:
@@ -774,7 +774,7 @@ importers:
         version: link:../painters/dom
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/layout-engine/style-engine:
     dependencies:
@@ -790,7 +790,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/layout-engine/tests:
     dependencies:
@@ -959,7 +959,7 @@ importers:
         version: 3.2.0
       happy-dom:
         specifier: 'catalog:'
-        version: 20.3.4
+        version: 20.4.0
       postcss-nested:
         specifier: 'catalog:'
         version: 6.2.0(postcss@8.5.6)
@@ -983,7 +983,7 @@ importers:
         version: 0.24.0(patch_hash=b69b54a87bfd9531260555cfb2fda7c94e6f75c124e3a3fae26d64272bbe86ff)(rollup@4.53.3)(vite@7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
       y-protocols:
         specifier: 'catalog:'
         version: 1.0.6(yjs@13.6.19)
@@ -1083,7 +1083,7 @@ importers:
         version: 0.24.0(patch_hash=b69b54a87bfd9531260555cfb2fda7c94e6f75c124e3a3fae26d64272bbe86ff)(rollup@4.53.3)(vite@7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
       xml-js:
         specifier: 'catalog:'
         version: 1.6.11
@@ -1137,7 +1137,7 @@ importers:
         version: 4.5.4(@types/node@22.19.2)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/template-builder/demo:
     dependencies:
@@ -1174,7 +1174,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
   shared/common:
     devDependencies:
@@ -1189,7 +1189,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
       vue:
         specifier: 'catalog:'
         version: 3.5.25(typescript@5.9.3)
@@ -5603,8 +5603,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@20.3.4:
-    resolution: {integrity: sha512-rfbiwB6OKxZFIFQ7SRnCPB2WL9WhyXsFoTfecYgeCeFSOBxvkWLaXsdv5ehzJrfqwXQmDephAKWLRQoFoJwrew==}
+  happy-dom@20.4.0:
+    resolution: {integrity: sha512-RDeQm3dT9n0A5f/TszjUmNCLEuPnMGv3Tv4BmNINebz/h17PA6LMBcxJ5FrcqltNBMh9jA/8ufgDdBYUdBt+eg==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -12974,7 +12974,7 @@ snapshots:
       vite: 7.2.7(@types/node@22.19.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
       vue: 3.5.25(typescript@5.9.3)
 
-  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))':
+  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -12989,7 +12989,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -15637,7 +15637,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@20.3.4:
+  happy-dom@20.4.0:
     dependencies:
       '@types/node': 22.19.2
       '@types/whatwg-mimetype': 3.0.2
@@ -20935,7 +20935,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.8.2
 
-  vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.3.4)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2):
+  vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.19.2)(happy-dom@20.4.0)(jiti@2.6.1)(jsdom@27.3.0(canvas@3.2.0)(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -20963,7 +20963,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 22.19.2
-      happy-dom: 20.3.4
+      happy-dom: 20.4.0
       jsdom: 27.3.0(canvas@3.2.0)(postcss@8.5.6)
     transitivePeerDependencies:
       - jiti
