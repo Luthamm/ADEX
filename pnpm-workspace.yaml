@@ -18,7 +18,7 @@ catalog:
   eslint-plugin-react: ^7.37.5
   eslint-plugin-react-hooks: ^7.0.1
   # Core dependencies
-  '@commitlint/cli': ^19.8.1
+  '@commitlint/cli': ^20.4.0
   '@commitlint/config-conventional': ^19.8.1
   '@eslint/js': ^9.31.0
   '@floating-ui/dom': ^1.7.0
