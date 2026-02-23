@@ -1,4 +1,4 @@
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import { Extension } from '@core/Extension.js';
 import { applyStyleIsolationClass } from '@utils/styleIsolation.js';
@@ -218,7 +218,11 @@ const nodeResizer = (nodeNames = ['image'], editor) => {
   function updateHandlePositions(resizableElement) {
     if (!resizeContainer || !resizableElement) return;
 
-    const rect = resizableElement.getBoundingClientRect();
+    // When called with the wrapper span (sd-editor-resizable-wrapper), the span's
+    // bounding rect can differ from the actual image due to line-height, baseline
+    // alignment, and margin space. Use the actual <img> element's rect instead.
+    const targetElement = resizableElement.querySelector('img') || resizableElement;
+    const rect = targetElement.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
 
@@ -271,11 +275,14 @@ const nodeResizer = (nodeNames = ['image'], editor) => {
 
     // Calculate new dimensions maintaining aspect ratio
     const newWidth = Math.max(20, resizeState.startWidth + deltaX);
+    const newHeight = newWidth / resizeState.aspectRatio;
 
-    // Apply the new size immediately for visual feedback
+    // Apply the new size immediately for visual feedback.
+    // Set explicit height (not 'auto') to prevent line box reflow that
+    // causes the image to shift vertically during drag.
     if (resizeState.resizableElement) {
       resizeState.resizableElement.style.width = `${newWidth}px`;
-      resizeState.resizableElement.style.height = 'auto';
+      resizeState.resizableElement.style.height = `${newHeight}px`;
 
       // Update handle positions
       updateHandlePositions(resizeState.resizableElement);
@@ -295,11 +302,12 @@ const nodeResizer = (nodeNames = ['image'], editor) => {
     // Calculate final dimensions
     const newWidth = Math.max(20, resizeState.startWidth + deltaX);
     const newHeight = newWidth / resizeState.aspectRatio;
+    const resizePos = resizeState.pos;
 
     // Update the document
-    if (editorView && resizeState.pos < editorView.state.doc.content.size) {
+    if (editorView && resizePos < editorView.state.doc.content.size) {
       const tr = editorView.state.tr;
-      const node = tr.doc.nodeAt(resizeState.pos);
+      const node = tr.doc.nodeAt(resizePos);
 
       if (nodeNames.includes(node?.type.name)) {
         const attrs = {
@@ -311,8 +319,10 @@ const nodeResizer = (nodeNames = ['image'], editor) => {
           },
         };
 
-        tr.setNodeMarkup(resizeState.pos, null, attrs);
+        tr.setNodeMarkup(resizePos, null, attrs);
         tr.setMeta(NodeResizerKey, { action: 'resize' });
+        // Preserve the NodeSelection so the image stays selected after resize
+        tr.setSelection(NodeSelection.create(tr.doc, resizePos));
         editorView.dispatch(tr);
       }
     }
@@ -329,6 +339,17 @@ const nodeResizer = (nodeNames = ['image'], editor) => {
       resizableElement: null,
       aspectRatio: 1,
     };
+
+    // After DOM updates from the transaction, re-show handles on the new image element.
+    // The old wrapper span is replaced during re-render, so we need to find the new one.
+    setTimeout(() => {
+      if (!editorView) return;
+      const searchRoot = editorView.dom;
+      const wrapper = searchRoot?.querySelector('.sd-editor-resizable-wrapper');
+      if (wrapper) {
+        showResizeHandles(editorView, wrapper);
+      }
+    }, 20);
   }
 
   function cleanupEventListeners() {

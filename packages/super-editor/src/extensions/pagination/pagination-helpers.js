@@ -186,7 +186,7 @@ export const createHeaderFooterEditor = ({
     fontFamily: fontFamilyCss || typeface,
     fontSize: `${fontSizeInPixles}px`,
     lineHeight: `${lineHeight}px`,
-    overflow: isFooter ? 'visible' : 'hidden',
+    overflow: 'visible',
     pointerEvents: 'auto', // Critical: enables click interaction
     backgroundColor: 'white', // Ensure editor has white background
   });

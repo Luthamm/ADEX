@@ -94,6 +94,15 @@ export class EditorOverlayManager {
   /** Full-width border line element (MS Word style) */
   #borderLine: HTMLElement | null = null;
 
+  /** ResizeObserver for tracking editor content height during editing */
+  #resizeObserver: ResizeObserver | null = null;
+
+  /** Initial bottom position of footer editor host (for upward growth) */
+  #initialBottom: number | null = null;
+
+  /** Current editor content height as reported by ResizeObserver */
+  #editorContentHeight: number | null = null;
+
   /**
    * Creates a new EditorOverlayManager instance.
    *
@@ -262,6 +271,9 @@ export class EditorOverlayManager {
    * ```
    */
   hideEditingOverlay(): void {
+    // Stop height tracking before cleanup
+    this.stopEditorHeightTracking();
+
     // Show static decoration content
     if (this.#activeDecorationContainer) {
       this.#activeDecorationContainer.style.visibility = 'visible';
@@ -289,6 +301,129 @@ export class EditorOverlayManager {
     this.#activeEditorHost = null;
     this.#activeDecorationContainer = null;
     this.#activeRegion = null;
+  }
+
+  /**
+   * Syncs the active editor host and border line with the decoration container.
+   *
+   * Called after a paint during editing mode. The renderer updates the hidden
+   * decoration container with new dimensions based on content changes. This
+   * method reads those dimensions and applies them to the editor host.
+   *
+   * IMPORTANT: Only the editor host is resized, NOT the inner sd-editor-scoped
+   * container. Resizing sd-editor-scoped triggers ProseMirror reflows that cause
+   * focus/selection loss. Since sd-editor-scoped has overflow:visible, its content
+   * remains fully visible and interactive regardless of its own dimensions.
+   */
+  updateActiveOverlaySize(): void {
+    if (!this.#activeEditorHost || !this.#activeRegion) return;
+
+    // Re-query decoration container from page element (may become stale after repaint)
+    const pageElement = this.#activeEditorHost.parentElement;
+    if (pageElement) {
+      const freshContainer = this.#findDecorationContainer(pageElement, this.#activeRegion.kind);
+      if (freshContainer) {
+        this.#activeDecorationContainer = freshContainer;
+      }
+    }
+
+    if (!this.#activeDecorationContainer) return;
+
+    const width = this.#activeDecorationContainer.offsetWidth;
+    const decorationHeight = this.#activeDecorationContainer.offsetHeight;
+    const top = this.#activeDecorationContainer.offsetTop;
+    const left = this.#activeDecorationContainer.offsetLeft;
+
+    if (width <= 0 || decorationHeight <= 0) return;
+
+    // Use the larger of decoration height and editor content height
+    const height =
+      this.#editorContentHeight != null ? Math.max(decorationHeight, this.#editorContentHeight) : decorationHeight;
+
+    this.#activeEditorHost.style.width = `${width}px`;
+    this.#activeEditorHost.style.height = `${height}px`;
+    this.#activeEditorHost.style.left = `${left}px`;
+
+    if (this.#activeRegion.kind === 'footer') {
+      const decorBottom = top + decorationHeight;
+      const newTop = decorBottom - height;
+      this.#activeEditorHost.style.top = `${newTop}px`;
+      // Update anchor for future ResizeObserver callbacks
+      this.#initialBottom = decorBottom;
+    } else {
+      this.#activeEditorHost.style.top = `${top}px`;
+    }
+
+    // Reposition the border line to match the new header/footer bounds
+    if (this.#borderLine) {
+      const hostTop = parseFloat(this.#activeEditorHost.style.top) || 0;
+      const borderTop = this.#activeRegion.kind === 'header' ? hostTop + height : hostTop;
+      this.#borderLine.style.top = `${borderTop}px`;
+    }
+  }
+
+  /**
+   * Starts observing the editor container's height via ResizeObserver.
+   * When the editor content grows/shrinks, the editor host and border line
+   * are resized to match. For footers, the host grows upward (bottom anchored).
+   *
+   * @param editorContainer - The .super-editor element to observe
+   * @param callback - Called with the new height when it changes
+   */
+  startEditorHeightTracking(editorContainer: HTMLElement, callback: (newHeight: number) => void): void {
+    this.stopEditorHeightTracking();
+
+    // Store initial bottom position for footer upward-growth
+    if (this.#activeEditorHost && this.#activeRegion?.kind === 'footer') {
+      const top = parseFloat(this.#activeEditorHost.style.top) || 0;
+      const height = parseFloat(this.#activeEditorHost.style.height) || 0;
+      this.#initialBottom = top + height;
+    }
+
+    let lastKnownHeight = 0;
+
+    this.#resizeObserver = new ResizeObserver(() => {
+      if (!this.#activeEditorHost || !this.#activeRegion) return;
+
+      const newHeight = editorContainer.offsetHeight;
+      if (newHeight <= 0 || newHeight === lastKnownHeight) return;
+      lastKnownHeight = newHeight;
+
+      this.#editorContentHeight = newHeight;
+
+      // Update editor host height
+      this.#activeEditorHost.style.height = `${newHeight}px`;
+
+      // For footers, grow upward (bottom edge anchored)
+      if (this.#activeRegion.kind === 'footer' && this.#initialBottom != null) {
+        const newTop = this.#initialBottom - newHeight;
+        this.#activeEditorHost.style.top = `${newTop}px`;
+
+        if (this.#borderLine) {
+          this.#borderLine.style.top = `${newTop}px`;
+        }
+      } else if (this.#borderLine) {
+        // Header: border at bottom edge
+        const top = parseFloat(this.#activeEditorHost.style.top) || 0;
+        this.#borderLine.style.top = `${top + newHeight}px`;
+      }
+
+      callback(newHeight);
+    });
+
+    this.#resizeObserver.observe(editorContainer);
+  }
+
+  /**
+   * Stops observing editor height changes and clears tracking state.
+   */
+  stopEditorHeightTracking(): void {
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+    this.#initialBottom = null;
+    this.#editorContentHeight = null;
   }
 
   /**
@@ -336,6 +471,7 @@ export class EditorOverlayManager {
    * that will be cleaned up by the virtualization system.
    */
   destroy(): void {
+    this.stopEditorHeightTracking();
     this.#hideHeaderFooterBorder();
     this.#activeEditorHost = null;
     this.#activeDecorationContainer = null;
@@ -390,8 +526,9 @@ export class EditorOverlayManager {
         position: 'absolute',
         pointerEvents: 'auto', // Critical: enables click interaction
         visibility: 'hidden', // Hidden by default, shown during editing
-        overflow: 'hidden',
+        overflow: 'visible',
         boxSizing: 'border-box',
+        backgroundColor: 'white', // Covers expanded area when editor host grows
       });
 
       if (decorationContainer) {

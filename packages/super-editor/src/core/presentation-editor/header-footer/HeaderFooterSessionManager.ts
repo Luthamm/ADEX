@@ -608,6 +608,28 @@ export class HeaderFooterSessionManager {
       this.#activeEditor.setOptions({ documentMode: 'viewing' });
     }
 
+    // Stop height tracking and restore editor container sizing before hiding overlay
+    this.#overlayManager?.stopEditorHeightTracking();
+    const activeEditorHost = this.#overlayManager?.getActiveEditorHost();
+    if (activeEditorHost) {
+      const ec = activeEditorHost.querySelector('.super-editor') as HTMLElement | null;
+      if (ec) {
+        ec.style.height = ec.dataset.originalHeight || '';
+        ec.style.minHeight = '';
+        ec.style.top = ec.dataset.originalTop || '0';
+        ec.style.transform = ec.dataset.originalTransform || '';
+        delete ec.dataset.originalHeight;
+        delete ec.dataset.originalTop;
+        delete ec.dataset.originalTransform;
+
+        const pm = ec.querySelector('.ProseMirror') as HTMLElement | null;
+        if (pm) {
+          pm.style.maxHeight = '100%';
+          pm.style.minHeight = '100%';
+        }
+      }
+    }
+
     this.#overlayManager?.hideEditingOverlay();
     this.#overlayManager?.showSelectionOverlay();
 
@@ -756,6 +778,39 @@ export class HeaderFooterSessionManager {
           } else {
             editorContainer.style.transform = '';
           }
+        }
+      }
+
+      // Enable natural sizing for dynamic header/footer height during editing
+      {
+        const sdContainer = editorHost.querySelector('.super-editor') as HTMLElement | null;
+        if (sdContainer) {
+          // Store original styles for restoration on exit
+          sdContainer.dataset.originalHeight = sdContainer.style.height;
+          sdContainer.dataset.originalTop = sdContainer.style.top;
+          sdContainer.dataset.originalTransform = sdContainer.style.transform;
+
+          // Let content size naturally (no minHeight — allows shrinking when content is deleted)
+          sdContainer.style.height = 'auto';
+          sdContainer.style.minHeight = '0';
+
+          // For footers, reset positioning so content flows from top of host
+          if (region.kind === 'footer') {
+            sdContainer.style.top = '0';
+            sdContainer.style.transform = '';
+          }
+
+          const pm = sdContainer.querySelector('.ProseMirror') as HTMLElement | null;
+          if (pm) {
+            pm.style.maxHeight = 'none';
+            pm.style.minHeight = 'auto';
+          }
+
+          // Start tracking editor height changes via ResizeObserver
+          this.#overlayManager?.startEditorHeightTracking(sdContainer, () => {
+            this.#deps?.setPendingDocChange();
+            this.#deps?.scheduleRerender();
+          });
         }
       }
 
@@ -1294,6 +1349,20 @@ export class HeaderFooterSessionManager {
     this.#headerDecorationProvider = this.createDecorationProvider('header', layout);
     this.#footerDecorationProvider = this.createDecorationProvider('footer', layout);
     this.rebuildRegions(layout);
+  }
+
+  /**
+   * Sync the editor host size with the decoration container after a paint.
+   * Must be called AFTER the renderer has updated the DOM, so the decoration
+   * container reflects the new content dimensions.
+   *
+   * Only resizes the editor host — never the inner sd-editor-scoped container,
+   * which would trigger ProseMirror reflows and focus/selection loss.
+   */
+  syncOverlaySizeAfterPaint(): void {
+    if (this.isEditing && this.#overlayManager) {
+      this.#overlayManager.updateActiveOverlaySize();
+    }
   }
 
   /**

@@ -1553,20 +1553,23 @@ export class DomPainter {
     const marginLeft = data.marginLeft ?? 0;
     const marginRight = page.margins?.right ?? 0;
 
-    // For footers, if content is taller than reserved space, expand container upward
-    // The container bottom stays anchored at footerMargin from page bottom
+    // If content is taller than reserved space, expand the container.
+    // For footers: expand upward (bottom edge stays anchored at footerMargin from page bottom).
+    // For headers: expand downward (top edge stays anchored at headerMargin from page top).
     let effectiveHeight = data.height;
     let effectiveOffset = baseOffset;
     if (
-      kind === 'footer' &&
       typeof data.contentHeight === 'number' &&
       Number.isFinite(data.contentHeight) &&
       data.contentHeight > 0 &&
       data.contentHeight > data.height
     ) {
       effectiveHeight = data.contentHeight;
-      // Move container up to accommodate taller content while keeping bottom edge in place
-      effectiveOffset = baseOffset - (data.contentHeight - data.height);
+      if (kind === 'footer') {
+        // Move container up to accommodate taller content while keeping bottom edge in place
+        effectiveOffset = baseOffset - (data.contentHeight - data.height);
+      }
+      // For headers: top edge stays the same (baseOffset), container just grows downward
     }
 
     container.style.position = 'absolute';

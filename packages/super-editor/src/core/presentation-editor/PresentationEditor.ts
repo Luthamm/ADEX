@@ -2989,6 +2989,7 @@ export class PresentationEditor extends EventEmitter {
       const mapping = this.#pendingMapping;
       this.#pendingMapping = null;
       painter.paint(layout, this.#painterHost, mapping ?? undefined);
+      this.#headerFooterSession?.syncOverlaySizeAfterPaint();
       this.#applyVertAlignToLayout();
       this.#rebuildDomPositionIndex();
       this.#domIndexObserverManager?.resume();

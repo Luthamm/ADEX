@@ -72,7 +72,7 @@ export const Image = Node.create({
     return {
       allowBase64: true,
       htmlAttributes: {
-        style: 'display: inline-block;',
+        style: 'display: inline-block; vertical-align: top;',
         'aria-label': 'Image node',
       },
     };

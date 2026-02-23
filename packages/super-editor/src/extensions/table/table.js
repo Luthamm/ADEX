@@ -1153,7 +1153,11 @@ export const Table = Node.create({
   },
 
   addPmPlugins() {
-    const resizable = this.options.resizable && this.editor.isEditable;
+    // Always add columnResizing when the option is enabled, regardless of current
+    // isEditable state. This is needed for header/footer editors which start
+    // non-editable (for sizing) and become editable later. The PM columnResizing
+    // plugin already checks view.editable internally before allowing interactions.
+    const resizable = this.options.resizable;
 
     return [
       ...(resizable
