@@ -1,3 +1,4 @@
+import { TextSelection } from 'prosemirror-state';
 import { Extension } from '../Extension.js';
 import { isIOS } from '../utilities/isIOS.js';
 import { isMacOS } from '../utilities/isMacOS.js';
@@ -58,8 +59,24 @@ export const Keymap = Extension.create({
       'Mod-Delete': () => handleDelete(this.editor),
       'Mod-a': () => this.editor.commands.selectAll(),
       Tab: () => this.editor.commands.insertTabNode(),
-      ArrowLeft: () => this.editor.commands.skipTab(-1),
-      ArrowRight: () => this.editor.commands.skipTab(1),
+      ArrowLeft: () => {
+        const { selection } = this.editor.state;
+        if (selection.node) {
+          const { state, dispatch } = this.editor.view;
+          dispatch(state.tr.setSelection(TextSelection.create(state.doc, selection.from)));
+          return true;
+        }
+        return this.editor.commands.skipTab(-1);
+      },
+      ArrowRight: () => {
+        const { selection } = this.editor.state;
+        if (selection.node) {
+          const { state, dispatch } = this.editor.view;
+          dispatch(state.tr.setSelection(TextSelection.create(state.doc, selection.to)));
+          return true;
+        }
+        return this.editor.commands.skipTab(1);
+      },
     };
 
     const pcBaseKeymap = {

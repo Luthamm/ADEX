@@ -95,10 +95,12 @@
   table-layout: fixed !important;
 }
 
-/* Ghost table gridlines visible during header/footer editing */
+/* Ghost table gridlines visible during header/footer editing.
+   Use outline so the visual guides don't shift content vs presentation mode. */
 .superdoc-header-editor-host td,
 .superdoc-footer-editor-host td {
-  border: 1px dotted #d0d0d0 !important;
+  outline: 1px dotted #d0d0d0;
+  outline-offset: -1px;
   overflow: hidden;
 }
 

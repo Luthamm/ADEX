@@ -14,7 +14,8 @@ export function translateAnchorNode(params) {
 
   const hasSimplePos = attrs.simplePos !== undefined || attrs.originalAttributes?.simplePos !== undefined;
 
-  if (!useOriginalChildren && hasSimplePos) {
+  if (!useOriginalChildren) {
+    // wp:simplePos is required for wp:anchor per OOXML spec
     anchorElements.push({
       name: 'wp:simplePos',
       attributes: {
@@ -63,6 +64,31 @@ export function translateAnchorNode(params) {
       attributes: { relativeFrom: attrs.anchorData.vRelativeFrom },
       ...(vElements.length && { elements: vElements }),
     });
+  } else if (!useOriginalChildren && !attrs.anchorData) {
+    // Image transitioned from inline to anchor (e.g., via setWrapping).
+    // Generate required positioning elements with sensible defaults.
+    const hOffset = attrs.marginOffset?.horizontal ?? 0;
+    const vOffset = attrs.marginOffset?.top ?? 0;
+    anchorElements.push({
+      name: 'wp:positionH',
+      attributes: { relativeFrom: 'column' },
+      elements: [
+        {
+          name: 'wp:posOffset',
+          elements: [{ type: 'text', text: pixelsToEmu(hOffset).toString() }],
+        },
+      ],
+    });
+    anchorElements.push({
+      name: 'wp:positionV',
+      attributes: { relativeFrom: 'paragraph' },
+      elements: [
+        {
+          name: 'wp:posOffset',
+          elements: [{ type: 'text', text: pixelsToEmu(vOffset).toString() }],
+        },
+      ],
+    });
   }
 
   const nodeElements = translateImageNode(params);
@@ -72,8 +98,24 @@ export function translateAnchorNode(params) {
     ...(nodeElements.attributes || {}),
   };
 
+  // Ensure all required wp:anchor attributes have defaults
   if (inlineAttrs.relativeHeight == null) {
     inlineAttrs.relativeHeight = 1;
+  }
+  if (inlineAttrs.behindDoc == null) {
+    inlineAttrs.behindDoc = attrs.wrap?.attrs?.behindDoc ? '1' : '0';
+  }
+  if (inlineAttrs.locked == null) {
+    inlineAttrs.locked = '0';
+  }
+  if (inlineAttrs.layoutInCell == null) {
+    inlineAttrs.layoutInCell = '1';
+  }
+  if (inlineAttrs.allowOverlap == null) {
+    inlineAttrs.allowOverlap = '1';
+  }
+  if (inlineAttrs.simplePos == null) {
+    inlineAttrs.simplePos = '0';
   }
 
   if (attrs.originalAttributes?.simplePos === undefined && hasSimplePos) {

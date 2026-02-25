@@ -148,6 +148,15 @@ const hashRuns = (block: FlowBlock): string => {
           }
 
           for (const run of paragraphBlock.runs) {
+            // For image runs, include dimensions in the cache key (mirroring paragraph approach).
+            // Without this, resizing an image inside a table cell won't invalidate the cache.
+            if (run.kind === 'image') {
+              const imgRun = run as ImageRun;
+              const srcHash = imgRun.src.slice(0, 50);
+              cellHashes.push(`img:${srcHash}:${imgRun.width}x${imgRun.height}`);
+              continue;
+            }
+
             // Text is used verbatim without normalization - whitespace affects measurements
             // (Fix for PR #1551: previously /\s+/g normalization caused cache collisions)
             const text = 'text' in run && typeof run.text === 'string' ? run.text : '';

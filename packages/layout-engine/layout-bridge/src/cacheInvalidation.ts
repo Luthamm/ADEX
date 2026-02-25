@@ -11,7 +11,7 @@
  * 4. Body measure cache for affected block IDs after token resolution
  */
 
-import type { FlowBlock, SectionMetadata } from '@superdoc/contracts';
+import type { FlowBlock, Run, SectionMetadata } from '@superdoc/contracts';
 import type { HeaderFooterConstraints } from '@superdoc/layout-engine';
 import type { MeasureCache } from './cache';
 import type { HeaderFooterLayoutCache } from './layoutHeaderFooter';
@@ -29,24 +29,48 @@ export function computeHeaderFooterContentHash(blocks: FlowBlock[]): string {
     return '';
   }
 
-  // Simple hash based on block IDs and paragraph run content
   const parts: string[] = [];
 
-  for (const block of blocks) {
-    parts.push(block.id);
+  function hashRuns(runs: Run[]) {
+    for (const run of runs) {
+      if ('src' in run) {
+        // ImageRun: include dimensions so resizing triggers invalidation
+        const r = run as { width?: number; height?: number };
+        parts.push(`img:${r.width ?? 0}x${r.height ?? 0}`);
+      } else if (run.kind !== 'lineBreak' && run.kind !== 'break' && run.kind !== 'fieldAnnotation') {
+        parts.push(run.text ?? '');
+      }
+      if ('bold' in run && run.bold) parts.push('b');
+      if ('italic' in run && run.italic) parts.push('i');
+      if ('token' in run && run.token) parts.push(`token:${run.token}`);
+    }
+  }
 
-    if (block.kind === 'paragraph') {
-      for (const run of block.runs) {
-        // Only TextRun and TabRun have text property; ImageRun, LineBreakRun, BreakRun, and FieldAnnotationRun do not
-        if (!('src' in run) && run.kind !== 'lineBreak' && run.kind !== 'break' && run.kind !== 'fieldAnnotation') {
-          parts.push(run.text ?? '');
+  function hashBlocks(blockList: FlowBlock[]) {
+    for (const block of blockList) {
+      parts.push(block.id);
+
+      if (block.kind === 'paragraph') {
+        hashRuns(block.runs);
+      } else if (block.kind === 'table') {
+        for (const row of block.rows) {
+          parts.push(row.id);
+          for (const cell of row.cells) {
+            if (cell.blocks) {
+              hashBlocks(cell.blocks as FlowBlock[]);
+            } else if (cell.paragraph) {
+              parts.push(cell.paragraph.id);
+              hashRuns(cell.paragraph.runs);
+            }
+          }
         }
-        if ('bold' in run && run.bold) parts.push('b');
-        if ('italic' in run && run.italic) parts.push('i');
-        if ('token' in run && run.token) parts.push(`token:${run.token}`);
+      } else if (block.kind === 'image') {
+        parts.push(`img:${block.width ?? 0}x${block.height ?? 0}`);
       }
     }
   }
+
+  hashBlocks(blocks);
 
   return parts.join('|');
 }

@@ -1007,6 +1007,8 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
     maxFontSize: number;
     /** Font info for the run with maxFontSize, used for accurate typography metrics */
     maxFontInfo?: FontInfo;
+    /** Tallest inline image height on this line (not subject to line-spacing multiplier) */
+    maxImageHeight?: number;
     maxWidth: number;
     segments: Line['segments'];
     leaders?: Line['leaders'];
@@ -1448,7 +1450,8 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
           toRun: runIndex,
           toChar: 1, // Images are treated as single atomic units
           width: imageWidth,
-          maxFontSize: imageHeight, // Use image height for line height calculation
+          maxFontSize: fallbackFontSize, // Keep text-based font size for line spacing calculation
+          maxImageHeight: imageHeight, // Track image height separately (no line-spacing multiplier)
           maxWidth: getEffectiveWidth(lines.length === 0 ? initialAvailableWidth : bodyContentWidth),
           spaceCount: 0,
           segments: [
@@ -1497,7 +1500,8 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
           toRun: runIndex,
           toChar: 1,
           width: imageWidth,
-          maxFontSize: imageHeight,
+          maxFontSize: fallbackFontSize, // Keep text-based font size for line spacing calculation
+          maxImageHeight: imageHeight, // Track image height separately (no line-spacing multiplier)
           maxWidth: getEffectiveWidth(bodyContentWidth),
           spaceCount: 0,
           segments: [
@@ -1514,7 +1518,7 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
         currentLine.toRun = runIndex;
         currentLine.toChar = 1;
         currentLine.width = roundValue(currentLine.width + imageWidth);
-        currentLine.maxFontSize = Math.max(currentLine.maxFontSize, imageHeight);
+        currentLine.maxImageHeight = Math.max(currentLine.maxImageHeight ?? 0, imageHeight);
         if (!currentLine.segments) currentLine.segments = [];
         currentLine.segments.push({
           runIndex,
@@ -2353,6 +2357,16 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
     };
     addBarTabsToLine(finalLine);
     lines.push(finalLine);
+  }
+
+  // Inline images should not have line-spacing multiplier applied to their height.
+  // The maxImageHeight was tracked separately during measurement; apply it as a
+  // minimum line height so images get their exact pixel height without extra gap.
+  for (const line of lines) {
+    const imgH = (line as any).maxImageHeight as number | undefined;
+    if (imgH && imgH > line.lineHeight) {
+      line.lineHeight = imgH;
+    }
   }
 
   const totalHeight = lines.reduce((sum, line) => sum + line.lineHeight, 0);

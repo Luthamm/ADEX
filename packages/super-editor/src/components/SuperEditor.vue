@@ -13,6 +13,7 @@ import LinkInput from './toolbar/LinkInput.vue';
 import TableResizeOverlay from './TableResizeOverlay.vue';
 import TableRowResizeOverlay from './TableRowResizeOverlay.vue';
 import ImageResizeOverlay from './ImageResizeOverlay.vue';
+import ImageWrapMenu from './ImageWrapMenu.vue';
 import LinkClickHandler from './link-click/LinkClickHandler.vue';
 import { checkNodeSpecificClicks } from './cursor-helpers.js';
 import { adjustPaginationBreaks } from './pagination-helpers.js';
@@ -325,6 +326,15 @@ const imageResizeState: ImageResizeState = reactive({
   visible: false,
   imageElement: null,
   blockId: null,
+});
+
+/**
+ * Image wrap menu state — tracks the selected image for the wrap type menu
+ */
+const imageWrapMenuState = reactive({
+  visible: false,
+  imageElement: null as HTMLElement | null,
+  imagePos: null as number | null,
 });
 
 /**
@@ -748,6 +758,9 @@ const clearSelectedImage = () => {
   selectedImageState.element = null;
   selectedImageState.blockId = null;
   selectedImageState.pmStart = null;
+  imageWrapMenuState.visible = false;
+  imageWrapMenuState.imageElement = null;
+  imageWrapMenuState.imagePos = null;
 };
 
 /**
@@ -768,6 +781,9 @@ const setSelectedImage = (element, blockId, pmStart) => {
     selectedImageState.element = element;
     selectedImageState.blockId = blockId ?? null;
     selectedImageState.pmStart = typeof pmStart === 'number' ? pmStart : null;
+    imageWrapMenuState.visible = true;
+    imageWrapMenuState.imageElement = element;
+    imageWrapMenuState.imagePos = typeof pmStart === 'number' ? pmStart : null;
   } else {
     clearSelectedImage();
   }
@@ -981,7 +997,28 @@ const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } =
       currentZoom.value = presentationEditor.zoom;
       nextTick(() => syncRulerOffset());
     }
+  } else {
+    // Plain Editor mode: track image selection for wrap menu via selectionUpdate
+    activeEditor.value.on('selectionUpdate', ({ editor: ed }) => {
+      const { selection } = ed.state;
+      if (selection?.node?.type?.name === 'image') {
+        const pos = selection.from;
+        const element = ed.view.nodeDOM(pos);
+        if (element instanceof HTMLElement) {
+          setSelectedImage(element, null, pos);
+          return;
+        }
+      }
+      clearSelectedImage();
+    });
   }
+
+  // All modes: detect keyboard-based deselection (e.g., arrow keys moving cursor off image)
+  activeEditor.value.on('selectionUpdate', ({ editor: ed }) => {
+    if (selectedImageState.element && ed.state.selection?.node?.type?.name !== 'image') {
+      clearSelectedImage();
+    }
+  });
 
   editor.value.on('paginationUpdate', () => {
     const base = activeEditor.value;
@@ -1226,6 +1263,14 @@ onBeforeUnmount(() => {
         :editor="activeEditor"
         :visible="imageResizeState.visible"
         :imageElement="imageResizeState.imageElement"
+      />
+      <!-- Image wrap menu for changing text wrapping mode -->
+      <ImageWrapMenu
+        v-if="editorReady && activeEditor"
+        :editor="activeEditor"
+        :visible="imageWrapMenuState.visible"
+        :imageElement="imageWrapMenuState.imageElement"
+        :imagePos="imageWrapMenuState.imagePos"
       />
     </div>
 

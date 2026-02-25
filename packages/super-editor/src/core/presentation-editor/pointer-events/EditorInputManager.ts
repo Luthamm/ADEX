@@ -877,11 +877,19 @@ export class EditorInputManager {
 
     // Handle click outside text content
     if (!rawHit) {
+      if (this.#lastSelectedImageBlockId) {
+        this.#callbacks.emit?.('imageDeselected', { blockId: this.#lastSelectedImageBlockId });
+        this.#lastSelectedImageBlockId = null;
+      }
       this.#focusEditorAtFirstPosition();
       return;
     }
 
     if (!hit || !doc) {
+      if (this.#lastSelectedImageBlockId) {
+        this.#callbacks.emit?.('imageDeselected', { blockId: this.#lastSelectedImageBlockId });
+        this.#lastSelectedImageBlockId = null;
+      }
       this.#callbacks.setPendingDocChange?.();
       this.#callbacks.scheduleRerender?.();
       return;

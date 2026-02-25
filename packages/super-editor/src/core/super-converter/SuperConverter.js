@@ -1322,7 +1322,7 @@ class SuperConverter {
         borders: { ...cellBorders },
         widthType: 'dxa',
         widthUnit: 'px',
-        cellMargins: {},
+        cellMargins: { top: 0, left: 0, right: 0, bottom: 0 },
         tableCellProperties: {
           cellWidth: { value: widthTwips, type: 'dxa' },
         },
