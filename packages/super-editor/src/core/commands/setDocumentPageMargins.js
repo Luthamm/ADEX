@@ -1,41 +1,18 @@
 import { updateSectionMargins, getSectPrMargins } from '@converter/section-properties.js';
 
 /**
- * Find the governing section break (paragraph with sectPr) for the current selection.
- * Prefers the first sectPr at or after the selection; falls back to the last before it.
- */
-function findGoverningSectPrParagraph(doc, selectionPos) {
-  const candidates = [];
-  doc.descendants((node, nodePos) => {
-    if (node.type?.name === 'paragraph' && node.attrs?.paragraphProperties?.sectPr) {
-      candidates.push({ node, pos: nodePos });
-    }
-  });
-  if (!candidates.length) return null;
-
-  // First, prefer a paragraph that actually contains the selection.
-  const inside = candidates.find((c) => selectionPos >= c.pos && selectionPos < c.pos + c.node.nodeSize);
-  if (inside) return inside;
-
-  // Otherwise, fall back to the first sectPr at or after the selection,
-  // or the last before if none are after.
-  const atOrAfter = candidates.find((c) => c.pos >= selectionPos);
-  return atOrAfter ?? candidates[candidates.length - 1];
-}
-
-/**
- * Update page margins (top/right/bottom/left) for the current section.
- * - If a paragraph-level sectPr exists for the section, mutate that sectPr.
- * - Otherwise fall back to the body-level sectPr (final section).
+ * Update page margins (top/right/bottom/left) for ALL sections in the document.
+ * This is the "global margin change" command used by the ruler — it updates every
+ * paragraph-level sectPr AND the body-level sectPr so all pages reflect the change.
  *
  * @param {{ topInches?: number; rightInches?: number; bottomInches?: number; leftInches?: number }} params
  * @returns {import('./types/index.js').Command}
  */
-export const setSectionPageMarginsAtSelection =
+export const setDocumentPageMargins =
   ({ topInches, rightInches, bottomInches, leftInches } = {}) =>
   ({ tr, state, editor }) => {
     if (!state || !editor) {
-      console.warn('[setSectionPageMarginsAtSelection] Missing state or editor');
+      console.warn('[setDocumentPageMargins] Missing state or editor');
       return false;
     }
 
@@ -44,7 +21,7 @@ export const setSectionPageMarginsAtSelection =
     const hasBottom = typeof bottomInches === 'number';
     const hasLeft = typeof leftInches === 'number';
     if (!hasTop && !hasRight && !hasBottom && !hasLeft) {
-      console.warn('[setSectionPageMarginsAtSelection] No margin values provided');
+      console.warn('[setDocumentPageMargins] No margin values provided');
       return false;
     }
     if (
@@ -53,7 +30,7 @@ export const setSectionPageMarginsAtSelection =
       (hasBottom && bottomInches < 0) ||
       (hasLeft && leftInches < 0)
     ) {
-      console.warn('[setSectionPageMarginsAtSelection] Margin values must be >= 0');
+      console.warn('[setDocumentPageMargins] Margin values must be >= 0');
       return false;
     }
 
@@ -63,24 +40,25 @@ export const setSectionPageMarginsAtSelection =
     if (hasBottom) updates.bottomInches = bottomInches;
     if (hasLeft) updates.leftInches = leftInches;
 
-    const { from } = state.selection;
-    const governing = findGoverningSectPrParagraph(state.doc, from);
+    // 1. Update ALL paragraph-level sectPr nodes
+    const paragraphs = [];
+    state.doc.descendants((node, nodePos) => {
+      if (node.type?.name === 'paragraph' && node.attrs?.paragraphProperties?.sectPr) {
+        paragraphs.push({ node, pos: nodePos });
+      }
+    });
 
-    if (governing) {
-      const { node, pos } = governing;
+    for (const { node, pos } of paragraphs) {
       const paraProps = node.attrs?.paragraphProperties || null;
       const existingSectPr = paraProps?.sectPr || null;
-      if (!existingSectPr) {
-        console.warn('[setSectionPageMarginsAtSelection] Paragraph found but has no sectPr');
-        return false;
-      }
+      if (!existingSectPr) continue;
 
       const sectPr = JSON.parse(JSON.stringify(existingSectPr));
       try {
         updateSectionMargins({ type: 'sectPr', sectPr }, updates);
       } catch (err) {
-        console.error('[setSectionPageMarginsAtSelection] Failed to update sectPr:', err);
-        return false;
+        console.error('[setDocumentPageMargins] Failed to update paragraph sectPr:', err);
+        continue;
       }
 
       const resolved = getSectPrMargins(sectPr);
@@ -100,34 +78,32 @@ export const setSectionPageMarginsAtSelection =
         sectionMargins: normalizedSectionMargins,
       };
 
-      tr.setNodeMarkup(pos, undefined, nextAttrs, node.marks);
-      tr.setMeta('forceUpdatePagination', true);
-      return true;
+      tr.setNodeMarkup(tr.mapping.map(pos), undefined, nextAttrs, node.marks);
     }
 
-    // Fall back to body-level sectPr (final section)
+    // 2. Update body-level sectPr (final section)
     const docAttrs = state.doc.attrs ?? {};
     const converter = editor.converter ?? null;
     const baseBodySectPr = docAttrs.bodySectPr || converter?.bodySectPr || null;
-    const sectPr =
+    const bodySectPr =
       baseBodySectPr != null
         ? JSON.parse(JSON.stringify(baseBodySectPr))
         : { type: 'element', name: 'w:sectPr', elements: [] };
 
     try {
-      updateSectionMargins({ type: 'sectPr', sectPr }, updates);
+      updateSectionMargins({ type: 'sectPr', sectPr: bodySectPr }, updates);
     } catch (err) {
-      console.error('[setSectionPageMarginsAtSelection] Failed to update sectPr:', err);
+      console.error('[setDocumentPageMargins] Failed to update body sectPr:', err);
       return false;
     }
 
     // Persist to converter and keep converter.pageStyles.pageMargins in sync
     if (converter) {
-      converter.bodySectPr = sectPr;
+      converter.bodySectPr = bodySectPr;
       if (!converter.pageStyles) converter.pageStyles = {};
       if (!converter.pageStyles.pageMargins) converter.pageStyles.pageMargins = {};
       const pageMargins = converter.pageStyles.pageMargins;
-      const resolved = getSectPrMargins(sectPr);
+      const resolved = getSectPrMargins(bodySectPr);
       if (resolved.top != null) pageMargins.top = resolved.top;
       if (resolved.right != null) pageMargins.right = resolved.right;
       if (resolved.bottom != null) pageMargins.bottom = resolved.bottom;
@@ -137,7 +113,7 @@ export const setSectionPageMarginsAtSelection =
     }
 
     // Write updated body sectPr onto the doc attrs so layout sees it immediately
-    tr.setDocAttribute('bodySectPr', sectPr);
+    tr.setDocAttribute('bodySectPr', bodySectPr);
 
     tr.setMeta('forceUpdatePagination', true);
     return true;

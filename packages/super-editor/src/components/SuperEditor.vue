@@ -1183,13 +1183,11 @@ const handleMarginChange = ({ side, value }) => {
             ? { bottomInches: value }
             : {};
 
-  const didUpdateSection =
-    typeof base.commands?.setSectionPageMarginsAtSelection === 'function'
-      ? base.commands.setSectionPageMarginsAtSelection(payload)
-      : false;
+  const didUpdate =
+    typeof base.commands?.setDocumentPageMargins === 'function' ? base.commands.setDocumentPageMargins(payload) : false;
 
-  // Fallback to legacy behavior if section-aware command is unavailable or failed
-  if (!didUpdateSection) {
+  // Fallback to legacy behavior if document-wide command is unavailable or failed
+  if (!didUpdate) {
     const pageStyles = base.getPageStyles();
     const { pageMargins } = pageStyles;
     const update = { ...pageMargins, [side]: value };

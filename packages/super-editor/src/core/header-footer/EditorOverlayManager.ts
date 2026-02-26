@@ -20,6 +20,21 @@ const BORDER_LINE_COLOR = '#4472c4';
 const BORDER_LINE_HEIGHT = '1px';
 
 /**
+ * Parse an inline CSS style property as a pixel value.
+ * Returns the numeric pixel value or null if not set / not a px value.
+ * Unlike DOM offset* properties (which return integer-rounded values),
+ * this preserves sub-pixel precision from the CSS inline style.
+ */
+function parseInlineStylePx(el: HTMLElement, prop: string): number | null {
+  const raw = el.style.getPropertyValue(prop);
+  if (!raw) return null;
+  // Handle both "96px" and calc() expressions — only parse simple px values
+  if (!raw.endsWith('px') || raw.includes('calc')) return null;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
  * Represents a header or footer region with position and dimension data.
  */
 export type HeaderFooterRegion = {
@@ -329,10 +344,14 @@ export class EditorOverlayManager {
 
     if (!this.#activeDecorationContainer) return;
 
-    const width = this.#activeDecorationContainer.offsetWidth;
-    const decorationHeight = this.#activeDecorationContainer.offsetHeight;
-    const top = this.#activeDecorationContainer.offsetTop;
-    const left = this.#activeDecorationContainer.offsetLeft;
+    // Use exact CSS inline style values to avoid sub-pixel rounding from offset* properties
+    const width =
+      parseInlineStylePx(this.#activeDecorationContainer, 'width') ?? this.#activeDecorationContainer.offsetWidth;
+    const decorationHeight =
+      parseInlineStylePx(this.#activeDecorationContainer, 'height') ?? this.#activeDecorationContainer.offsetHeight;
+    const top = parseInlineStylePx(this.#activeDecorationContainer, 'top') ?? this.#activeDecorationContainer.offsetTop;
+    const left =
+      parseInlineStylePx(this.#activeDecorationContainer, 'left') ?? this.#activeDecorationContainer.offsetLeft;
 
     if (width <= 0 || decorationHeight <= 0) return;
 
@@ -572,12 +591,15 @@ export class EditorOverlayManager {
       return;
     }
 
-    // Prefer inline layout metrics from the decoration container (unscaled numbers),
-    // fall back to region data when no container exists (empty headers/footers).
-    const top = decorationContainer?.offsetTop ?? region.localY;
-    const left = decorationContainer?.offsetLeft ?? region.localX;
-    const width = decorationContainer?.offsetWidth ?? region.width;
-    const height = decorationContainer?.offsetHeight ?? region.height;
+    // Use the exact CSS inline style values from the decoration container to avoid
+    // sub-pixel rounding from DOM offset* properties (which return integers).
+    // This ensures the editor host is positioned at exactly the same coordinates
+    // as the decoration container, preventing visual shifts when toggling between
+    // edit mode and view mode. Fall back to region data for empty headers/footers.
+    const top = (decorationContainer && parseInlineStylePx(decorationContainer, 'top')) ?? region.localY;
+    const left = (decorationContainer && parseInlineStylePx(decorationContainer, 'left')) ?? region.localX;
+    const width = (decorationContainer && parseInlineStylePx(decorationContainer, 'width')) ?? region.width;
+    const height = (decorationContainer && parseInlineStylePx(decorationContainer, 'height')) ?? region.height;
 
     // Apply positioning using pure layout coordinates
     Object.assign(editorHost.style, {
@@ -620,10 +642,14 @@ export class EditorOverlayManager {
 
     const isHeader = region.kind === 'header';
 
-    // Use layout coordinates. If a decoration container exists, its offset* values
-    // already represent unscaled layout numbers relative to the page.
-    const decorationTop = decorationContainer?.offsetTop;
-    const decorationHeight = decorationContainer?.offsetHeight;
+    // Use exact CSS inline style values from the decoration container to avoid
+    // sub-pixel rounding from offset* properties. Fall back to offset* if not available.
+    const decorationTop = decorationContainer
+      ? (parseInlineStylePx(decorationContainer, 'top') ?? decorationContainer.offsetTop)
+      : undefined;
+    const decorationHeight = decorationContainer
+      ? (parseInlineStylePx(decorationContainer, 'height') ?? decorationContainer.offsetHeight)
+      : undefined;
     const topPosition = isHeader
       ? decorationTop != null && decorationHeight != null
         ? decorationTop + decorationHeight

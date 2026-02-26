@@ -2,6 +2,7 @@
 
 import { Node } from '@core/index.js';
 import { setSectionPageMarginsAtSelection } from '@core/commands/setSectionPageMarginsAtSelection.js';
+import { setDocumentPageMargins } from '@core/commands/setDocumentPageMargins.js';
 
 /**
  * Configuration options for Document
@@ -105,6 +106,12 @@ export const Document = Node.create({
        * Set section page margins (top/right/bottom/left) for the section at the current selection.
        */
       setSectionPageMarginsAtSelection,
+
+      /**
+       * Set page margins (top/right/bottom/left) for ALL sections in the document.
+       * Used by the ruler for global margin changes.
+       */
+      setDocumentPageMargins,
     };
   },
 });
