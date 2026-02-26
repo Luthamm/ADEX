@@ -1,9 +1,17 @@
 import { TextSelection } from 'prosemirror-state';
+import { closeHistory } from 'prosemirror-history';
 import { Extension } from '../Extension.js';
 import { isIOS } from '../utilities/isIOS.js';
 import { isMacOS } from '../utilities/isMacOS.js';
 
 export const handleEnter = (editor) => {
+  const { view } = editor;
+  // Close the current undo group so this structural action becomes its own undo step.
+  // Note: this fires before the command chain, so if no command succeeds (rare — e.g.
+  // Enter with no valid split target) an empty undo boundary is created. Acceptable
+  // trade-off vs. the complexity of post-hoc closeHistory after commands.first.
+  view?.dispatch?.(closeHistory(view?.state?.tr));
+
   return editor.commands.first(({ commands }) => [
     () => commands.splitRunToParagraph(),
     () => commands.newlineInCode(),
@@ -14,6 +22,10 @@ export const handleEnter = (editor) => {
 };
 
 export const handleBackspace = (editor) => {
+  const { view } = editor;
+  // Close undo group — see comment in handleEnter.
+  view?.dispatch?.(closeHistory(view?.state?.tr));
+
   return editor.commands.first(({ commands, tr }) => [
     () => commands.undoInputRule(),
     () => {
@@ -31,6 +43,10 @@ export const handleBackspace = (editor) => {
 };
 
 export const handleDelete = (editor) => {
+  const { view } = editor;
+  // Close undo group — see comment in handleEnter.
+  view?.dispatch?.(closeHistory(view?.state?.tr));
+
   return editor.commands.first(({ commands }) => [
     () => commands.deleteSkipEmptyRun(),
     () => commands.deleteNextToRun(),

@@ -1,0 +1,131 @@
+---
+title: lists.get
+sidebarTitle: lists.get
+description: Reference for lists.get
+---
+
+{/* GENERATED FILE: DO NOT EDIT. Regenerate via `pnpm run docapi:sync`. */}
+
+> Alpha: Document API is currently alpha and subject to breaking changes.
+
+## Summary
+
+- Operation ID: `lists.get`
+- API member path: `editor.doc.lists.get(...)`
+- Mutates document: `no`
+- Idempotency: `idempotent`
+- Supports tracked mode: `no`
+- Supports dry run: `no`
+- Deterministic target resolution: `yes`
+
+## Input fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `address` | ListItemAddress | yes | ListItemAddress |
+
+### Example request
+
+```json
+{
+  "address": {
+    "kind": "block",
+    "nodeId": "node-def456",
+    "nodeType": "listItem"
+  }
+}
+```
+
+## Output fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `address` | ListItemAddress | yes | ListItemAddress |
+| `kind` | enum | no | `"ordered"`, `"bullet"` |
+| `level` | integer | no |  |
+| `marker` | string | no |  |
+| `ordinal` | integer | no |  |
+| `path` | integer[] | no |  |
+| `text` | string | no |  |
+
+### Example response
+
+```json
+{
+  "address": {
+    "kind": "block",
+    "nodeId": "node-def456",
+    "nodeType": "listItem"
+  },
+  "marker": "1.",
+  "ordinal": 1
+}
+```
+
+## Pre-apply throws
+
+- `TARGET_NOT_FOUND`
+
+## Non-applied failure codes
+
+- None
+
+## Raw schemas
+
+<Accordion title="Raw input schema">
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "address": {
+      "$ref": "#/$defs/ListItemAddress"
+    }
+  },
+  "required": [
+    "address"
+  ],
+  "type": "object"
+}
+```
+</Accordion>
+
+<Accordion title="Raw output schema">
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "address": {
+      "$ref": "#/$defs/ListItemAddress"
+    },
+    "kind": {
+      "enum": [
+        "ordered",
+        "bullet"
+      ]
+    },
+    "level": {
+      "type": "integer"
+    },
+    "marker": {
+      "type": "string"
+    },
+    "ordinal": {
+      "type": "integer"
+    },
+    "path": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "text": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "address"
+  ],
+  "type": "object"
+}
+```
+</Accordion>

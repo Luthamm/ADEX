@@ -1,0 +1,247 @@
+---
+title: lists.insert
+sidebarTitle: lists.insert
+description: Reference for lists.insert
+---
+
+{/* GENERATED FILE: DO NOT EDIT. Regenerate via `pnpm run docapi:sync`. */}
+
+> Alpha: Document API is currently alpha and subject to breaking changes.
+
+## Summary
+
+- Operation ID: `lists.insert`
+- API member path: `editor.doc.lists.insert(...)`
+- Mutates document: `yes`
+- Idempotency: `non-idempotent`
+- Supports tracked mode: `yes`
+- Supports dry run: `yes`
+- Deterministic target resolution: `yes`
+
+## Input fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `position` | enum | yes | `"before"`, `"after"` |
+| `target` | ListItemAddress | yes | ListItemAddress |
+| `text` | string | no |  |
+
+### Example request
+
+```json
+{
+  "position": "before",
+  "target": {
+    "kind": "block",
+    "nodeId": "node-def456",
+    "nodeType": "listItem"
+  },
+  "text": "Hello, world."
+}
+```
+
+## Output fields
+
+_No fields._
+
+### Example response
+
+```json
+{
+  "insertionPoint": {
+    "blockId": "block-abc123",
+    "kind": "text",
+    "range": {
+      "end": 10,
+      "start": 0
+    }
+  },
+  "item": {
+    "kind": "block",
+    "nodeId": "node-def456",
+    "nodeType": "listItem"
+  },
+  "success": true,
+  "trackedChangeRefs": [
+    {
+      "entityId": "entity-789",
+      "entityType": "trackedChange",
+      "kind": "entity"
+    }
+  ]
+}
+```
+
+## Pre-apply throws
+
+- `TARGET_NOT_FOUND`
+- `CAPABILITY_UNAVAILABLE`
+- `INVALID_TARGET`
+
+## Non-applied failure codes
+
+- `INVALID_TARGET`
+
+## Raw schemas
+
+<Accordion title="Raw input schema">
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "position": {
+      "enum": [
+        "before",
+        "after"
+      ]
+    },
+    "target": {
+      "$ref": "#/$defs/ListItemAddress"
+    },
+    "text": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "target",
+    "position"
+  ],
+  "type": "object"
+}
+```
+</Accordion>
+
+<Accordion title="Raw output schema">
+```json
+{
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "insertionPoint": {
+          "$ref": "#/$defs/TextAddress"
+        },
+        "item": {
+          "$ref": "#/$defs/ListItemAddress"
+        },
+        "success": {
+          "const": true
+        },
+        "trackedChangeRefs": {
+          "items": {
+            "$ref": "#/$defs/TrackedChangeAddress"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "item",
+        "insertionPoint"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "failure": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "enum": [
+                "INVALID_TARGET"
+              ]
+            },
+            "details": {},
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        },
+        "success": {
+          "const": false
+        }
+      },
+      "required": [
+        "success",
+        "failure"
+      ],
+      "type": "object"
+    }
+  ]
+}
+```
+</Accordion>
+
+<Accordion title="Raw success schema">
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "insertionPoint": {
+      "$ref": "#/$defs/TextAddress"
+    },
+    "item": {
+      "$ref": "#/$defs/ListItemAddress"
+    },
+    "success": {
+      "const": true
+    },
+    "trackedChangeRefs": {
+      "items": {
+        "$ref": "#/$defs/TrackedChangeAddress"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "success",
+    "item",
+    "insertionPoint"
+  ],
+  "type": "object"
+}
+```
+</Accordion>
+
+<Accordion title="Raw failure schema">
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_TARGET"
+          ]
+        },
+        "details": {},
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "const": false
+    }
+  },
+  "required": [
+    "success",
+    "failure"
+  ],
+  "type": "object"
+}
+```
+</Accordion>
