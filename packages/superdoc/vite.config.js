@@ -3,25 +3,12 @@ import copy from 'rollup-plugin-copy'
 import dts from 'vite-plugin-dts'
 import { defineConfig } from 'vite'
 import { configDefaults } from 'vitest/config'
-import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { visualizer } from 'rollup-plugin-visualizer';
 import vue from '@vitejs/plugin-vue'
 
 import { version } from './package.json';
 import sourceResolve from '../../vite.sourceResolve';
-
-// WORKAROUND: rolldown doesn't support trailing-slash imports (e.g. 'punycode/')
-// which Node.js treats as "resolve the package entry point". node-stdlib-browser's
-// url polyfill uses `import from 'punycode/'` and rolldown tries to open the
-// directory as a file. We resolve the actual entry point here and redirect via a
-// small plugin in optimizeDeps.rollupOptions below.
-// Track: https://github.com/nicolo-ribaudo/tc39-proposal-import-deferral/issues/3
-// TODO: Remove once rolldown supports trailing-slash imports or node-stdlib-browser drops them.
-const require = createRequire(import.meta.url);
-const stdlibRequire = createRequire(require.resolve('node-stdlib-browser/package.json'));
-const punycodeEntry = stdlibRequire.resolve('punycode/punycode.js');
 
 const visualizerConfig = {
   filename: './dist/bundle-analysis.html',
@@ -90,7 +77,6 @@ export default defineConfig(({ mode, command }) => {
     }),
     // visualizer(visualizerConfig)
   ].filter(Boolean);
-  if (mode !== 'test') plugins.push(nodePolyfills());
   const isDev = command === 'serve';
 
   // Use emoji marker instead of ANSI colors to avoid reporter layout issues
@@ -175,21 +161,6 @@ export default defineConfig(({ mode, command }) => {
     },
     optimizeDeps: {
       include: ['yjs', '@hocuspocus/provider'],
-      // Rolldown treats trailing-slash imports as directory paths.
-      // node-stdlib-browser's url polyfill imports 'punycode/' — resolve it to the
-      // actual file since punycode is also a Node.js builtin and pnpm isolates it.
-      rollupOptions: {
-        plugins: [
-          {
-            name: 'fix-punycode-trailing-slash',
-            resolveId(source) {
-              if (source === 'punycode/' || source === 'punycode') {
-                return { id: punycodeEntry };
-              }
-            },
-          },
-        ],
-      },
     },
     resolve: {
       alias: getAliases(isDev),

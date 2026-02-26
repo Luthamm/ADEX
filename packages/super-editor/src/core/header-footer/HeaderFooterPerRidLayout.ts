@@ -199,11 +199,16 @@ export async function layoutPerRIdHeaderFooters(
       pageResolver,
       deps.footerLayoutsByRId,
     );
-  } else {
-    // Single-section or uniform margins: use original single-constraint path
-    await layoutBlocksByRId('header', headerBlocksByRId, constraints, pageResolver, deps.headerLayoutsByRId);
-    await layoutBlocksByRId('footer', footerBlocksByRId, constraints, pageResolver, deps.footerLayoutsByRId);
   }
+
+  // Always store plain-rId entries. For single-section or uniform-margin documents,
+  // this is the primary layout path. For multi-section documents with per-section
+  // margins, this provides fallback entries for variant rIds (first/even/odd) that
+  // the per-section path doesn't cover (resolveRIdPerSection only tracks default rIds).
+  // Plain-rId keys never collide with composite keys (rId::sN), and the decoration
+  // provider prefers composite keys when available.
+  await layoutBlocksByRId('header', headerBlocksByRId, constraints, pageResolver, deps.headerLayoutsByRId);
+  await layoutBlocksByRId('footer', footerBlocksByRId, constraints, pageResolver, deps.footerLayoutsByRId);
 }
 
 /**

@@ -1528,7 +1528,13 @@ export class HeaderFooterSessionManager {
         return null;
       }
 
-      const variant = results.find((entry) => entry.type === headerFooterType);
+      let variant = results.find((entry) => entry.type === headerFooterType);
+      // OOXML fallback: if the requested variant (e.g. 'first') doesn't exist,
+      // fall back to 'default'. Per spec, when titlePg is enabled but no separate
+      // first-page header is defined, the default header should be used.
+      if ((!variant || !variant.layout?.pages?.length) && headerFooterType !== 'default') {
+        variant = results.find((entry) => entry.type === 'default');
+      }
       if (!variant || !variant.layout?.pages?.length) {
         return null;
       }
