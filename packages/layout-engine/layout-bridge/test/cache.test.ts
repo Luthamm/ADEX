@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MeasureCache } from '../src/cache';
-import type { FlowBlock, ImageRun, TableBlock, TableCell } from '@superdoc/contracts';
+import type { FlowBlock, ImageRun, ImageBlock, TableBlock, TableCell } from '@superdoc/contracts';
 
 const block = (id: string, text: string): FlowBlock => ({
   kind: 'paragraph',
@@ -277,6 +277,55 @@ describe('MeasureCache', () => {
 
       cache.invalidate(['img-block']);
       expect(cache.get(imgBlock, 400, 600)).toBeUndefined();
+    });
+  });
+
+  describe('block-level image caching', () => {
+    it('creates different cache keys for ImageBlocks with different dimensions', () => {
+      const block1: ImageBlock = { kind: 'image', id: 'img-1', src: 'test.png', width: 100, height: 50 };
+      const block2: ImageBlock = { kind: 'image', id: 'img-1', src: 'test.png', width: 200, height: 100 };
+
+      cache.set(block1, 400, 600, { totalHeight: 50 });
+      // Different dimensions should result in cache miss
+      expect(cache.get(block2, 400, 600)).toBeUndefined();
+    });
+
+    it('creates cache hit for ImageBlocks with same dimensions', () => {
+      const block1: ImageBlock = { kind: 'image', id: 'img-1', src: 'test.png', width: 100, height: 50 };
+      const block2: ImageBlock = { kind: 'image', id: 'img-1', src: 'test.png', width: 100, height: 50 };
+
+      cache.set(block1, 400, 600, { totalHeight: 50 });
+      expect(cache.get(block2, 400, 600)).toEqual({ totalHeight: 50 });
+    });
+
+    it('creates different cache keys for ImageBlocks with different sources', () => {
+      const block1: ImageBlock = { kind: 'image', id: 'img-1', src: 'image-a.png', width: 100, height: 50 };
+      const block2: ImageBlock = { kind: 'image', id: 'img-1', src: 'image-b.png', width: 100, height: 50 };
+
+      cache.set(block1, 400, 600, { totalHeight: 50 });
+      expect(cache.get(block2, 400, 600)).toBeUndefined();
+    });
+
+    it('creates different cache keys for drawing image blocks with different dimensions', () => {
+      const block1: FlowBlock = {
+        kind: 'drawing',
+        id: 'draw-1',
+        drawingKind: 'image',
+        src: 'test.png',
+        width: 100,
+        height: 50,
+      } as FlowBlock;
+      const block2: FlowBlock = {
+        kind: 'drawing',
+        id: 'draw-1',
+        drawingKind: 'image',
+        src: 'test.png',
+        width: 200,
+        height: 100,
+      } as FlowBlock;
+
+      cache.set(block1, 400, 600, { totalHeight: 50 });
+      expect(cache.get(block2, 400, 600)).toBeUndefined();
     });
   });
 

@@ -1,6 +1,8 @@
 import type {
   FlowBlock,
   ImageRun,
+  ImageBlock,
+  ImageDrawing,
   TableBlock,
   ParagraphBlock,
   ParagraphAttrs,
@@ -271,6 +273,25 @@ const hashRuns = (block: FlowBlock): string => {
 
     const contentHash = cellHashes.join('|');
     return `${block.id}:table:${contentHash}${tableAttrsKey}`;
+  }
+
+  // Include image dimensions for block-level images and image drawings so the cache
+  // key changes when the image is resized. Without this, resizing a block-level image
+  // (e.g., in a header/footer) would not invalidate the measurement cache, causing the
+  // layout to use stale dimensions and the image to snap back to its original size.
+  if (block.kind === 'image') {
+    const imgBlock = block as ImageBlock;
+    const srcHash = imgBlock.src?.slice(0, 50) ?? '';
+    return `${block.id}:img:${srcHash}:${imgBlock.width ?? 0}x${imgBlock.height ?? 0}`;
+  }
+  if (block.kind === 'drawing') {
+    const drawBlock = block as { drawingKind?: string; src?: string; width?: number; height?: number };
+    if (drawBlock.drawingKind === 'image') {
+      const imgDraw = block as ImageDrawing;
+      const srcHash = imgDraw.src?.slice(0, 50) ?? '';
+      return `${block.id}:drawing:${srcHash}:${imgDraw.width ?? 0}x${imgDraw.height ?? 0}`;
+    }
+    return block.id;
   }
 
   if (block.kind !== 'paragraph') return block.id;
