@@ -194,6 +194,7 @@ export class SuperToolbar extends EventEmitter {
     this.config = { ...this.config, ...config };
     this.toolbarItems = [];
     this.overflowItems = [];
+    this.sections = [];
     this.documentMode = config.documentMode || 'editing';
     this.isDev = config.isDev || false;
     this.superdoc = config.superdoc;
@@ -749,7 +750,7 @@ export class SuperToolbar extends EventEmitter {
     const containerWidth = this.toolbarContainer?.offsetWidth ?? 0;
     const availableWidth = this.config.responsiveToContainer ? containerWidth : documentWidth;
 
-    const { defaultItems, overflowItems } = makeDefaultItems({
+    const { defaultItems, overflowItems, sections } = makeDefaultItems({
       superToolbar,
       toolbarIcons: icons,
       toolbarTexts: texts,
@@ -777,6 +778,7 @@ export class SuperToolbar extends EventEmitter {
 
     this.toolbarItems = filteredItems;
     this.overflowItems = overflowItems.filter((item) => allConfigItems.includes(item.name.value));
+    this.sections = sections;
   }
 
   /**

@@ -250,6 +250,17 @@ export function imageNodeToBlock(
       anchor.behindDoc = normalizedWrap.behindDoc;
     }
   }
+  // When anchor has no explicit alignH, derive it from wrapText so the layout
+  // engine positions the image on the correct side of the page.
+  // wrapText='left' means "text wraps to the left" → image on right side.
+  // wrapText='right' means "text wraps to the right" → image on left side.
+  if (anchor && !anchor.alignH && normalizedWrap?.wrapText) {
+    if (normalizedWrap.wrapText === 'left') {
+      anchor.alignH = 'right';
+    } else if (normalizedWrap.wrapText === 'right') {
+      anchor.alignH = 'left';
+    }
+  }
   const isInline = normalizedWrap?.type === 'Inline' || (typeof attrs.inline === 'boolean' && attrs.inline);
   const display: 'inline' | 'block' =
     explicitDisplay === 'inline' || explicitDisplay === 'block' ? explicitDisplay : isInline ? 'inline' : 'block';

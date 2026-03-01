@@ -107,6 +107,16 @@
   pointer-events: none;
 }
 
+/* Re-apply overflow-wrap after CSS isolation (`all: revert` in isolation.css)
+   reverts the inherited word-wrap: break-word from .ProseMirror.
+   Without this, text next to floated images (e.g. Square wrap) overflows
+   instead of wrapping at the container edge. */
+.sd-editor-scoped .ProseMirror p,
+.sd-editor-scoped .ProseMirror li {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
 .sd-editor-scoped .ProseMirror img {
   height: auto;
   max-width: 100%;

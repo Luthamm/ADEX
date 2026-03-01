@@ -116,8 +116,9 @@ export function imageNodeToRun({ node, positions, sdtMetadata }: InlineConverter
   const distRight = pickNumber(wrapAttrs.distRight ?? wrapAttrs.distR);
   if (distRight != null) run.distRight = distRight;
 
-  // Default vertical alignment to bottom (text baseline alignment)
-  run.verticalAlign = 'bottom';
+  // Align the bottom edge of the image with the text baseline.
+  // For replaced elements (img), 'baseline' places the bottom edge on the baseline.
+  run.verticalAlign = 'baseline';
 
   // Position tracking
   const pos = positions.get(node);

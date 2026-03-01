@@ -1072,18 +1072,34 @@ export const makeDefaultItems = ({
     }),
   });
 
+  // Section definitions for collapsed toolbar mode.
+  // Each section groups center items between separators.
+  // 'icon' is the representative icon shown when the section is collapsed.
+  // 'items' lists the toolbar item names belonging to this section.
+  const sectionDefs = [
+    { id: 'font', icon: toolbarIcons.color, items: ['zoom', 'fontFamily', 'fontSize'] },
+    { id: 'format', icon: toolbarIcons.bold, items: ['bold', 'italic', 'underline', 'strike', 'color', 'highlight'] },
+    { id: 'insert', icon: toolbarIcons.link, items: ['link', 'image', 'table', 'tableActions', 'cellBackground'] },
+    {
+      id: 'paragraph',
+      icon: toolbarIcons.alignLeft,
+      items: ['textAlign', 'list', 'numberedlist', 'indentleft', 'indentright', 'lineHeight'],
+    },
+    { id: 'formatText', icon: toolbarIcons.paintbrush, items: ['linkedStyles'] },
+    {
+      id: 'styles',
+      icon: toolbarIcons.clearFormatting,
+      items: ['ruler', 'copyFormat', 'clearFormatting', 'ai'],
+    },
+  ];
+
   // Responsive toolbar calculations
   const breakpoints = {
     sm: 768,
-    md: 1024,
-    lg: 1280,
-    xl: 1410,
   };
   const stickyItemsWidth = 120;
   const toolbarPadding = 32;
-
-  const itemsToHideXL = ['linkedStyles', 'clearFormatting', 'copyFormat', 'ruler'];
-  const itemsToHideSM = ['zoom', 'fontFamily', 'fontSize', 'redo'];
+  const responsiveBuffer = 170;
 
   let toolbarItems = [
     undo,
@@ -1135,11 +1151,6 @@ export const makeDefaultItems = ({
     toolbarItems = toolbarItems.filter((item) => item.name.value !== 'ai');
   }
 
-  // Hide separators on small screens
-  if (availableWidth <= breakpoints.md && hideButtons) {
-    toolbarItems = toolbarItems.filter((item) => item.type !== 'separator');
-  }
-
   // Remove docx only items
   if (superToolbar.config.mode !== 'docx') {
     const getLinkedStylesIndex = toolbarItems.findIndex((item) => item.name.value === 'linkedStyles');
@@ -1162,45 +1173,66 @@ export const makeDefaultItems = ({
   const toolbarItemsSticky = [search, undo, overflow, documentMode].map((item) => item.name);
   const isStickyItem = (item) => toolbarItemsSticky.includes(item.name);
 
-  const overflowItems = [];
-  const visibleItems = [];
+  // Identify center items that belong to sections
+  const allCenterItems = toolbarItems.filter(
+    (item) => (item.group?.value || 'center') === 'center' && !isStickyItem(item) && item.type !== 'separator',
+  );
 
-  // initial width with padding
-  let totalWidth = toolbarPadding + stickyItemsWidth;
+  // Build sections with actual item references and expanded widths
+  const COLLAPSED_SECTION_WIDTH = 32;
+  const separatorWidth = controlSizes.get('separator');
+  const sections = sectionDefs
+    .map((def) => {
+      const items = def.items.map((name) => allCenterItems.find((item) => item.name.value === name)).filter(Boolean);
+      const expandedWidth = items.reduce(
+        (sum, item) => sum + (controlSizes.get(item.name.value) || controlSizes.get('default')),
+        0,
+      );
+      return { id: def.id, icon: def.icon, items, expandedWidth, collapsed: false };
+    })
+    .filter((s) => s.items.length > 0);
 
+  // Calculate total width when fully expanded
+  let totalWidth = toolbarPadding + stickyItemsWidth + responsiveBuffer;
+  sections.forEach((s) => {
+    totalWidth += s.expandedWidth;
+  });
+  // Separators between sections
+  totalWidth += Math.max(0, sections.length - 1) * separatorWidth;
+  // Add non-center item widths (left/right group items)
   toolbarItems.forEach((item) => {
-    const itemWidth = controlSizes.get(item.name.value) || controlSizes.get('default');
-
-    if (availableWidth < breakpoints.xl && itemsToHideXL.includes(item.name.value) && hideButtons) {
-      overflowItems.push(item);
-      if (item.name.value === 'linkedStyles') {
-        const linkedStylesIdx = toolbarItems.findIndex((item) => item.name.value === 'linkedStyles');
-        toolbarItems.splice(linkedStylesIdx + 1, 1);
-      }
-      return;
-    }
-
-    if (availableWidth < breakpoints.sm && itemsToHideSM.includes(item.name.value) && hideButtons) {
-      overflowItems.push(item);
-      return;
-    }
-
-    if (isStickyItem(item)) {
-      visibleItems.push(item);
-      totalWidth += itemWidth;
-      return;
-    }
-
-    if (totalWidth < availableWidth || !hideButtons) {
-      visibleItems.push(item);
-      totalWidth += itemWidth;
-    } else {
-      overflowItems.push(item);
+    const group = item.group?.value || 'center';
+    if (group !== 'center' && item.type !== 'separator') {
+      totalWidth += controlSizes.get(item.name.value) || controlSizes.get('default');
     }
   });
 
+  // Progressive section collapse: collapse one section at a time from right to left
+  // until everything fits within the available width.
+  if (hideButtons) {
+    for (let i = sections.length - 1; i >= 0 && totalWidth > availableWidth; i--) {
+      sections[i].collapsed = true;
+      totalWidth -= sections[i].expandedWidth - COLLAPSED_SECTION_WIDTH;
+      // Collapsed sections don't need separators
+      totalWidth -= separatorWidth;
+    }
+  }
+
+  // All items are "visible" for state management — sections handle the rendering.
+  const visibleItems = toolbarItems.filter((item) => item.type !== 'separator');
+  const overflowItems = [];
+
+  // On very small screens, redo can still go to overflow
+  if (availableWidth < breakpoints.sm && hideButtons) {
+    const redoIdx = visibleItems.findIndex((item) => item.name.value === 'redo');
+    if (redoIdx >= 0) {
+      overflowItems.push(...visibleItems.splice(redoIdx, 1));
+    }
+  }
+
   return {
     defaultItems: visibleItems,
-    overflowItems: overflowItems.filter((item) => item.type !== 'separator'),
+    overflowItems,
+    sections,
   };
 };

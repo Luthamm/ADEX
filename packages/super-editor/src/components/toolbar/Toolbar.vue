@@ -65,7 +65,15 @@ const onKeyDown = async (e) => {
   }
 };
 
+let lastAvailableWidth = 0;
 const onWindowResized = async () => {
+  const currentWidth = proxy.$toolbar.config.responsiveToContainer
+    ? (proxy.$toolbar.toolbarContainer?.offsetWidth ?? 0)
+    : document.documentElement.clientWidth;
+  // Skip re-mount if width hasn't actually changed (prevents flash from
+  // dropdown panels or other non-layout-affecting DOM changes).
+  if (currentWidth === lastAvailableWidth) return;
+  lastAvailableWidth = currentWidth;
   await proxy.$toolbar.onToolbarResize();
   toolbarKey.value += 1;
 };
@@ -97,6 +105,7 @@ const restoreSelection = () => {
         tabindex="0"
         :toolbar-items="getFilteredItems('center')"
         :overflow-items="proxy.$toolbar.overflowItems"
+        :sections="proxy.$toolbar.sections"
         :ui-font-family="uiFontFamily"
         position="center"
         @command="handleCommand"
@@ -119,17 +128,12 @@ const restoreSelection = () => {
 <style scoped>
 .superdoc-toolbar {
   display: flex;
+  flex-wrap: nowrap !important;
   width: 100%;
   justify-content: space-between;
   padding: 4px 16px;
   box-sizing: border-box;
   font-family: var(--sd-ui-font-family, Arial, Helvetica, sans-serif);
-}
-
-@media (max-width: 1280px) {
-  .superdoc-toolbar-group-side {
-    min-width: auto !important;
-  }
 }
 
 @media (max-width: 768px) {

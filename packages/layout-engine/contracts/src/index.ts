@@ -287,11 +287,11 @@ export type ImageRun = {
   distRight?: number;
 
   /**
-   * Vertical alignment of image relative to text baseline.
-   * Currently only 'bottom' is supported (image sits on baseline).
-   * Future: 'top', 'middle', 'baseline', 'text-top', 'text-bottom'.
+   * Vertical alignment of image relative to text.
+   * - 'baseline': bottom edge of image sits on the text baseline (Word default)
+   * - 'bottom': bottom edge of image aligns with bottom of line box
    */
-  verticalAlign?: 'bottom';
+  verticalAlign?: 'baseline' | 'bottom';
 
   /** Absolute ProseMirror position (inclusive) of this image run. */
   pmStart?: number;

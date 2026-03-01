@@ -1417,12 +1417,20 @@ async function measureParagraphBlock(block: ParagraphBlock, maxWidth: number): P
       // Calculate image width including spacing
       const leftSpace = run.distLeft ?? 0;
       const rightSpace = run.distRight ?? 0;
-      const imageWidth = run.width + leftSpace + rightSpace;
+      let imageWidth = run.width + leftSpace + rightSpace;
 
       // Calculate image height including spacing (for line height)
       const topSpace = run.distTop ?? 0;
       const bottomSpace = run.distBottom ?? 0;
-      const imageHeight = run.height + topSpace + bottomSpace;
+      let imageHeight = run.height + topSpace + bottomSpace;
+
+      // Clamp inline image to available content width so it doesn't overflow page margins.
+      // Scale height proportionally to preserve aspect ratio.
+      if (imageWidth > maxWidth && maxWidth > 0) {
+        const scale = maxWidth / imageWidth;
+        imageHeight = imageHeight * scale;
+        imageWidth = maxWidth;
+      }
 
       // Determine image position - check active tab group first, then pending alignment
       let imageStartX: number | undefined;

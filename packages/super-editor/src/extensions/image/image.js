@@ -239,7 +239,7 @@ export const Image = Node.create({
         renderDOM: ({ size, shouldCover }) => {
           let style = '';
           let { width, height } = size ?? {};
-          if (width) style += `width: ${width}px;`;
+          if (width) style += `width: ${width}px; max-width: 100%;`;
           if (height && shouldCover) {
             // When shouldCover is true (from <a:stretch><a:fillRect/> with empty srcRect),
             // scale the image to cover the extent and clip overflow (like MS Word)
@@ -544,9 +544,9 @@ export const Image = Node.create({
 
       if (horizontal) {
         if (floatRight) {
-          margin.right += horizontal;
+          margin.right = Math.max(0, margin.right + horizontal);
         } else {
-          margin.left += horizontal;
+          margin.left = Math.max(0, margin.left + horizontal);
         }
       }
 
@@ -698,7 +698,7 @@ export const Image = Node.create({
        */
       setWrapping:
         (options) =>
-        ({ chain, state }) => {
+        ({ state, dispatch }) => {
           const { selection } = state;
           const { $from } = selection;
           const node = $from.nodeAfter;
@@ -737,7 +737,10 @@ export const Image = Node.create({
             isAnchor: type !== 'Inline',
           };
 
-          return chain().updateAttributes(this.name, updatedAttrs).run();
+          if (dispatch) {
+            dispatch(state.tr.setNodeMarkup(selection.from, undefined, updatedAttrs));
+          }
+          return true;
         },
     };
   },

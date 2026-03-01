@@ -4357,6 +4357,10 @@ export class DomPainter {
     if (!hasClipPath) {
       img.width = run.width;
       img.height = run.height;
+      // Prevent inline images from overflowing the content area (page margins).
+      // height: auto maintains aspect ratio when max-width constrains the width.
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
     } else {
       Object.assign(img.style, {
         width: '100%',
@@ -4440,6 +4444,7 @@ export class DomPainter {
       wrapper.classList.add(DOM_CLASS_NAMES.INLINE_IMAGE_CLIP_WRAPPER);
       wrapper.style.display = 'inline-block';
       wrapper.style.width = `${run.width}px`;
+      wrapper.style.maxWidth = '100%';
       wrapper.style.height = `${run.height}px`;
       wrapper.style.boxSizing = 'border-box';
       wrapper.style.overflow = 'hidden';

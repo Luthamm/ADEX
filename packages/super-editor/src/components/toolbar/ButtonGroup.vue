@@ -3,6 +3,7 @@ import { computed, ref, h } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import OverflowMenu from './OverflowMenu.vue';
+import CollapsedSection from './CollapsedSection.vue';
 import { NDropdown, NTooltip } from 'naive-ui';
 import { useHighContrastMode } from '../../composables/use-high-contrast-mode';
 
@@ -36,6 +37,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  sections: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const currentItem = ref(null);
@@ -44,17 +49,15 @@ const { isHighContrastMode } = useHighContrastMode();
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
 const styleMap = {
   left: {
-    minWidth: '120px',
     justifyContent: 'flex-start',
   },
   right: {
-    minWidth: '120px',
     justifyContent: 'flex-end',
   },
   default: {
     // Only grow if not on a mobile device
     flexGrow: isMobile ? 0 : 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
 };
 
@@ -210,94 +213,292 @@ const handleDropdownUpdateShow = (open) => {
   }
   emit('dropdown-update-show', open);
 };
+
+// Whether to show a separator after a given section index.
+// Only show between two consecutive expanded sections.
+const showSeparatorAfter = (sIdx) => {
+  if (sIdx >= props.sections.length - 1) return false;
+  return !props.sections[sIdx].collapsed && !props.sections[sIdx + 1].collapsed;
+};
+
+// Items not belonging to any section (overflow, etc.) rendered after sections
+const sectionItemNames = computed(() => {
+  const names = new Set();
+  for (const section of props.sections) {
+    for (const item of section.items) {
+      names.add(item.name.value);
+    }
+  }
+  return names;
+});
+
+const nonSectionItems = computed(() => {
+  return props.toolbarItems.filter((item) => !sectionItemNames.value.has(item.name.value) && item.type !== 'separator');
+});
 </script>
 
 <template>
   <div :style="getPositionStyle" class="button-group" role="group" @focus="handleFocus">
-    <div
-      v-for="(item, index) in toolbarItems"
-      :key="item.id.value"
-      :class="{
-        narrow: item.isNarrow.value,
-        wide: item.isWide.value,
-        disabled: item.disabled.value,
-      }"
-      @keydown="(e) => handleKeyDown(e, item)"
-      class="toolbar-item-ctn"
-      ref="toolbarItemRefs"
-      :tabindex="index === 0 ? 0 : -1"
-      :data-item-id="item.id.value"
-    >
-      <!-- toolbar separator -->
-      <ToolbarSeparator v-if="isSeparator(item)" style="width: 20px" />
+    <!-- Section-driven rendering for center group -->
+    <template v-if="sections.length">
+      <!-- Non-section items that appear before sections (e.g. items from left/right in center group) -->
+      <template v-for="item in nonSectionItems" :key="'ns-' + item.id.value">
+        <div
+          v-if="!isOverflow(item)"
+          :class="{
+            narrow: item.isNarrow.value,
+            wide: item.isWide.value,
+            disabled: item.disabled.value,
+          }"
+          class="toolbar-item-ctn"
+          ref="toolbarItemRefs"
+          :data-item-id="item.id.value"
+        >
+          <n-dropdown
+            v-if="isDropdown(item) && item.nestedOptions?.value?.length"
+            :options="dropdownOptions(item)"
+            :trigger="item.disabled.value ? null : 'click'"
+            :show="item.expand.value"
+            :content-style="{ fontFamily: props.uiFontFamily }"
+            size="medium"
+            placement="bottom-start"
+            class="toolbar-button toolbar-dropdown sd-editor-toolbar-dropdown"
+            :class="{ 'high-contrast': isHighContrastMode }"
+            @select="(key, option) => handleSelect(item, option)"
+            @update-show="handleDropdownUpdateShow"
+            :style="item.dropdownStyles.value"
+            :menu-props="() => ({ role: 'menu', style: { fontFamily: props.uiFontFamily } })"
+            :node-props="(option) => getDropdownAttributes(option, item)"
+          >
+            <n-tooltip
+              trigger="hover"
+              :disabled="!item.tooltip?.value"
+              :content-style="{ fontFamily: props.uiFontFamily }"
+            >
+              <template #trigger>
+                <ToolbarButton
+                  :toolbar-item="item"
+                  :disabled="item.disabled.value"
+                  @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
+                  @buttonClick="handleToolbarButtonClick(item)"
+                />
+              </template>
+              <div>
+                {{ item.tooltip }}
+                <span v-if="item.disabled.value">(disabled)</span>
+              </div>
+            </n-tooltip>
+          </n-dropdown>
 
-      <!-- Toolbar button -->
-      <n-dropdown
-        v-if="isDropdown(item) && item.nestedOptions?.value?.length"
-        :options="dropdownOptions(item)"
-        :trigger="item.disabled.value ? null : 'click'"
-        :show="item.expand.value"
-        :content-style="{ fontFamily: props.uiFontFamily }"
-        size="medium"
-        placement="bottom-start"
-        class="toolbar-button toolbar-dropdown sd-editor-toolbar-dropdown"
-        :class="{ 'high-contrast': isHighContrastMode }"
-        @select="(key, option) => handleSelect(item, option)"
-        @update-show="handleDropdownUpdateShow"
-        :style="item.dropdownStyles.value"
-        :menu-props="
-          () => ({
-            role: 'menu',
-            style: { fontFamily: props.uiFontFamily },
-          })
-        "
-        :node-props="(option) => getDropdownAttributes(option, item)"
+          <n-tooltip
+            trigger="hover"
+            v-else-if="isButton(item)"
+            class="sd-editor-toolbar-tooltip"
+            :content-style="{ fontFamily: props.uiFontFamily }"
+          >
+            <template #trigger>
+              <ToolbarButton
+                :toolbar-item="item"
+                @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
+                @buttonClick="handleToolbarButtonClick(item)"
+              />
+            </template>
+            <div v-if="item.tooltip">
+              {{ item.tooltip }}
+              <span v-if="item.disabled.value">(disabled)</span>
+            </div>
+          </n-tooltip>
+        </div>
+      </template>
+
+      <!-- Sections: each rendered expanded or collapsed -->
+      <template v-for="(section, sIdx) in sections" :key="'sec-' + section.id">
+        <!-- Collapsed section: single icon button with dropdown -->
+        <CollapsedSection v-if="section.collapsed" :section="section" @command="(cmd) => $emit('command', cmd)" />
+
+        <!-- Expanded section: render items individually -->
+        <template v-else>
+          <div
+            v-for="item in section.items"
+            :key="item.id.value"
+            :class="{
+              narrow: item.isNarrow.value,
+              wide: item.isWide.value,
+              disabled: item.disabled.value,
+            }"
+            @keydown="(e) => handleKeyDown(e, item)"
+            class="toolbar-item-ctn"
+            ref="toolbarItemRefs"
+            :data-item-id="item.id.value"
+          >
+            <n-dropdown
+              v-if="isDropdown(item) && item.nestedOptions?.value?.length"
+              :options="dropdownOptions(item)"
+              :trigger="item.disabled.value ? null : 'click'"
+              :show="item.expand.value"
+              :content-style="{ fontFamily: props.uiFontFamily }"
+              size="medium"
+              placement="bottom-start"
+              class="toolbar-button toolbar-dropdown sd-editor-toolbar-dropdown"
+              :class="{ 'high-contrast': isHighContrastMode }"
+              @select="(key, option) => handleSelect(item, option)"
+              @update-show="handleDropdownUpdateShow"
+              :style="item.dropdownStyles.value"
+              :menu-props="() => ({ role: 'menu', style: { fontFamily: props.uiFontFamily } })"
+              :node-props="(option) => getDropdownAttributes(option, item)"
+            >
+              <n-tooltip
+                trigger="hover"
+                :disabled="!item.tooltip?.value"
+                :content-style="{ fontFamily: props.uiFontFamily }"
+              >
+                <template #trigger>
+                  <ToolbarButton
+                    :toolbar-item="item"
+                    :disabled="item.disabled.value"
+                    @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
+                    @buttonClick="handleToolbarButtonClick(item)"
+                  />
+                </template>
+                <div>
+                  {{ item.tooltip }}
+                  <span v-if="item.disabled.value">(disabled)</span>
+                </div>
+              </n-tooltip>
+            </n-dropdown>
+
+            <n-tooltip
+              trigger="hover"
+              v-else-if="isButton(item)"
+              class="sd-editor-toolbar-tooltip"
+              :content-style="{ fontFamily: props.uiFontFamily }"
+            >
+              <template #trigger>
+                <ToolbarButton
+                  :toolbar-item="item"
+                  :is-overflow-item="fromOverflow"
+                  @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
+                  @buttonClick="handleToolbarButtonClick(item)"
+                />
+              </template>
+              <div v-if="item.tooltip">
+                {{ item.tooltip }}
+                <span v-if="item.disabled.value">(disabled)</span>
+              </div>
+            </n-tooltip>
+          </div>
+        </template>
+
+        <!-- Separator between two consecutive expanded sections -->
+        <div v-if="showSeparatorAfter(sIdx)" class="toolbar-item-ctn narrow">
+          <ToolbarSeparator style="width: 20px" />
+        </div>
+      </template>
+
+      <!-- Overflow menu after all sections -->
+      <template v-for="item in nonSectionItems" :key="'ov-' + item.id.value">
+        <div v-if="isOverflow(item) && overflowItems.length" class="toolbar-item-ctn">
+          <OverflowMenu
+            :toolbar-item="item"
+            @buttonClick="handleToolbarButtonClick(item)"
+            :overflow-items="overflowItems"
+            @close="closeDropdowns"
+          />
+        </div>
+      </template>
+    </template>
+
+    <!-- Flat rendering (no sections — left/right groups, or fallback) -->
+    <template v-else>
+      <div
+        v-for="(item, index) in toolbarItems"
+        :key="item.id.value"
+        :class="{
+          narrow: item.isNarrow.value,
+          wide: item.isWide.value,
+          disabled: item.disabled.value,
+        }"
+        @keydown="(e) => handleKeyDown(e, item)"
+        class="toolbar-item-ctn"
+        ref="toolbarItemRefs"
+        :tabindex="index === 0 ? 0 : -1"
+        :data-item-id="item.id.value"
       >
-        <n-tooltip trigger="hover" :disabled="!item.tooltip?.value" :content-style="{ fontFamily: props.uiFontFamily }">
+        <!-- toolbar separator -->
+        <ToolbarSeparator v-if="isSeparator(item)" style="width: 20px" />
+
+        <!-- Toolbar button -->
+        <n-dropdown
+          v-if="isDropdown(item) && item.nestedOptions?.value?.length"
+          :options="dropdownOptions(item)"
+          :trigger="item.disabled.value ? null : 'click'"
+          :show="item.expand.value"
+          :content-style="{ fontFamily: props.uiFontFamily }"
+          size="medium"
+          placement="bottom-start"
+          class="toolbar-button toolbar-dropdown sd-editor-toolbar-dropdown"
+          :class="{ 'high-contrast': isHighContrastMode }"
+          @select="(key, option) => handleSelect(item, option)"
+          @update-show="handleDropdownUpdateShow"
+          :style="item.dropdownStyles.value"
+          :menu-props="
+            () => ({
+              role: 'menu',
+              style: { fontFamily: props.uiFontFamily },
+            })
+          "
+          :node-props="(option) => getDropdownAttributes(option, item)"
+        >
+          <n-tooltip
+            trigger="hover"
+            :disabled="!item.tooltip?.value"
+            :content-style="{ fontFamily: props.uiFontFamily }"
+          >
+            <template #trigger>
+              <ToolbarButton
+                :toolbar-item="item"
+                :disabled="item.disabled.value"
+                @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
+                @buttonClick="handleToolbarButtonClick(item)"
+              />
+            </template>
+            <div>
+              {{ item.tooltip }}
+              <span v-if="item.disabled.value">(disabled)</span>
+            </div>
+          </n-tooltip>
+        </n-dropdown>
+
+        <n-tooltip
+          trigger="hover"
+          v-else-if="isButton(item)"
+          class="sd-editor-toolbar-tooltip"
+          :content-style="{ fontFamily: props.uiFontFamily }"
+        >
           <template #trigger>
             <ToolbarButton
               :toolbar-item="item"
-              :disabled="item.disabled.value"
+              :is-overflow-item="fromOverflow"
               @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
               @buttonClick="handleToolbarButtonClick(item)"
             />
           </template>
-          <div>
+          <div v-if="item.tooltip">
             {{ item.tooltip }}
             <span v-if="item.disabled.value">(disabled)</span>
           </div>
         </n-tooltip>
-      </n-dropdown>
 
-      <n-tooltip
-        trigger="hover"
-        v-else-if="isButton(item)"
-        class="sd-editor-toolbar-tooltip"
-        :content-style="{ fontFamily: props.uiFontFamily }"
-      >
-        <template #trigger>
-          <ToolbarButton
-            :toolbar-item="item"
-            :is-overflow-item="fromOverflow"
-            @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
-            @buttonClick="handleToolbarButtonClick(item)"
-          />
-        </template>
-        <div v-if="item.tooltip">
-          {{ item.tooltip }}
-          <span v-if="item.disabled.value">(disabled)</span>
-        </div>
-      </n-tooltip>
-
-      <!-- Overflow menu -->
-      <OverflowMenu
-        v-if="isOverflow(item) && overflowItems.length"
-        :toolbar-item="item"
-        @buttonClick="handleToolbarButtonClick(item)"
-        :overflow-items="overflowItems"
-        @close="closeDropdowns"
-      />
-    </div>
+        <!-- Overflow menu -->
+        <OverflowMenu
+          v-if="isOverflow(item) && overflowItems.length"
+          :toolbar-item="item"
+          @buttonClick="handleToolbarButtonClick(item)"
+          :overflow-items="overflowItems"
+          @close="closeDropdowns"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -363,5 +564,6 @@ const handleDropdownUpdateShow = (open) => {
 <style lang="postcss" scoped>
 .button-group {
   display: flex;
+  flex-wrap: nowrap;
 }
 </style>

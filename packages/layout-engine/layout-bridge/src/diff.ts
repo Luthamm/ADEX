@@ -418,6 +418,9 @@ const paragraphBlocksEqual = (a: FlowBlock & { kind: 'paragraph' }, b: FlowBlock
       ('fontSize' in runA ? runA.fontSize : undefined) !== ('fontSize' in runB ? runB.fontSize : undefined) ||
       ('fontFamily' in runA ? runA.fontFamily : undefined) !== ('fontFamily' in runB ? runB.fontFamily : undefined) ||
       ('highlight' in runA ? runA.highlight : undefined) !== ('highlight' in runB ? runB.highlight : undefined) ||
+      // Compare image run dimensions so inline image resize invalidates the paragraph
+      ('width' in runA ? runA.width : undefined) !== ('width' in runB ? runB.width : undefined) ||
+      ('height' in runA ? runA.height : undefined) !== ('height' in runB ? runB.height : undefined) ||
       getTrackedChangeKey(runA) !== getTrackedChangeKey(runB) ||
       getCommentKey(runA) !== getCommentKey(runB)
     ) {
