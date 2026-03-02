@@ -369,6 +369,7 @@ describe('SuperDoc.vue', () => {
     });
 
     // Set up default mock presentation editor instances for common document IDs
+    const mockEditorElement = document.createElement('div');
     const mockPresentationEditor = {
       getSelectionBounds: vi.fn(() => ({
         bounds: { top: 100, left: 10, right: 80, bottom: 160 },
@@ -379,6 +380,7 @@ describe('SuperDoc.vue', () => {
       getPages: vi.fn(() => []),
       getLayoutError: vi.fn(() => null),
       setZoom: vi.fn(),
+      element: mockEditorElement,
     };
     mockState.instances.set('doc-1', mockPresentationEditor);
 
@@ -540,7 +542,7 @@ describe('SuperDoc.vue', () => {
     await nextTick();
     const setupState = wrapper.vm.$.setupState;
     setupState.toolsMenuPosition.top = '12px';
-    setupState.toolsMenuPosition.right = '0px';
+    setupState.toolsMenuPosition.left = '40px';
     superdocStoreStub.selectionPosition.value = {
       left: 10,
       right: 40,
@@ -887,7 +889,7 @@ describe('SuperDoc.vue', () => {
 
     const setupState = wrapper.vm.$.setupState;
     setupState.toolsMenuPosition.top = '100px';
-    setupState.toolsMenuPosition.right = '0px';
+    setupState.toolsMenuPosition.left = '90px';
     superdocStoreStub.selectionPosition.value = {
       left: 10,
       right: 90,

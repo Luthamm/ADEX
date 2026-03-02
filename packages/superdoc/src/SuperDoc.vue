@@ -150,7 +150,7 @@ const pdfViewerRef = ref(null);
 
 // Comments layer
 const commentsLayer = ref(null);
-const toolsMenuPosition = reactive({ top: null, right: '-25px', zIndex: 101 });
+const toolsMenuPosition = reactive({ top: null, left: null, zIndex: 101 });
 
 // Create a ref to pass to the composable
 const activeEditorRef = computed(() => proxy.$superdoc.activeEditor);
@@ -202,6 +202,7 @@ const handleToolClick = (tool) => {
 
   activeSelection.value = null;
   toolsMenuPosition.top = null;
+  toolsMenuPosition.left = null;
 };
 
 const handleDocumentMouseDown = (e) => {
@@ -380,8 +381,8 @@ const processSelectionChange = (editor, transaction) => {
     const bottom = toCoords.bottom - layerBounds.top;
     const selectionBounds = {
       top,
-      left: fromCoords.left,
-      right: toCoords.left,
+      left: fromCoords.left - layerBounds.left,
+      right: toCoords.left - layerBounds.left,
       bottom,
     };
 
@@ -405,8 +406,9 @@ const processSelectionChange = (editor, transaction) => {
       y: bounds.bottom,
       source: 'super-editor',
     });
+
     const selectionResult = useSelection({
-      selectionBounds: { ...bounds },
+      selectionBounds: bounds,
       page: pageIndex + 1,
       documentId,
       source: 'super-editor',
@@ -436,8 +438,8 @@ const processSelectionChange = (editor, transaction) => {
   const bottom = toCoords.bottom - layerBounds.top;
   const selectionBounds = {
     top,
-    left: fromCoords.left,
-    right: toCoords.left,
+    left: fromCoords.left - layerBounds.left,
+    right: toCoords.left - layerBounds.left,
     bottom,
   };
 
@@ -784,17 +786,52 @@ const handleSelectionChange = (selection) => {
 
   activeSelection.value = selection;
 
-  // Place the tools menu at the level of the selection
-  const isPdf = selection.source === 'pdf' || selection.source?.value === 'pdf';
-  const zoom = isPdf ? (activeZoom.value ?? 100) / 100 : 1;
-  const top = selection.selectionBounds.top * zoom;
-  toolsMenuPosition.top = top + 'px';
-  toolsMenuPosition.right = isMobileView ? '0' : '-25px';
+  // Position the tools menu directly below the selection highlights.
+  // Query the rendered highlight rects so we bypass the coordinate pipeline entirely.
+  nextTick(() => {
+    if (!layers.value) return;
+    const layersRect = layers.value.getBoundingClientRect();
+
+    // Try to measure from the actual rendered selection highlights
+    const selRects = layers.value.querySelectorAll('.presentation-editor__selection-rect');
+    let bottom = null;
+    let centerX = null;
+
+    if (selRects.length > 0) {
+      let maxBottom = -Infinity;
+      let minLeft = Infinity;
+      let maxRight = -Infinity;
+      for (const el of selRects) {
+        const r = el.getBoundingClientRect();
+        if (r.height > 0 && r.width > 0) {
+          maxBottom = Math.max(maxBottom, r.bottom);
+          minLeft = Math.min(minLeft, r.left);
+          maxRight = Math.max(maxRight, r.right);
+        }
+      }
+      if (Number.isFinite(maxBottom)) {
+        bottom = maxBottom - layersRect.top;
+        centerX = (minLeft + maxRight) / 2 - layersRect.left;
+      }
+    }
+
+    // Fallback: use selectionBounds from the coordinate pipeline
+    if (bottom == null) {
+      const isPdf = selection.source === 'pdf' || selection.source?.value === 'pdf';
+      const zoom = isPdf ? (activeZoom.value ?? 100) / 100 : 1;
+      bottom = selection.selectionBounds.bottom * zoom;
+      centerX = ((selection.selectionBounds.left + selection.selectionBounds.right) / 2) * zoom;
+    }
+
+    toolsMenuPosition.top = bottom + 4 + 'px';
+    toolsMenuPosition.left = centerX + 'px';
+  });
 };
 
 const resetSelection = () => {
   selectionPosition.value = null;
   toolsMenuPosition.top = null;
+  toolsMenuPosition.left = null;
 };
 
 const updateSelection = ({ startX, startY, x, y, source, page }) => {
@@ -1001,19 +1038,29 @@ const getPDFViewer = () => {
     >
       <div class="superdoc__layers layers" ref="layers" role="group">
         <!-- Floating tools menu (shows up when user has text selection)-->
-        <div v-if="showToolsFloatingMenu" class="superdoc__tools tools" :style="toolsMenuPosition">
-          <div class="tools-item" data-id="is-tool" @mousedown.stop.prevent="handleToolClick('comments')">
-            <div class="superdoc__tools-icon" v-html="superdocIcons.comment"></div>
-          </div>
-          <!-- AI tool button -->
-          <div
+        <div v-if="showToolsFloatingMenu" class="superdoc__tools" :style="toolsMenuPosition">
+          <button class="superdoc__tools-btn" data-id="is-tool" @mousedown.stop.prevent="handleToolClick('comments')">
+            <svg
+              class="superdoc__tools-comment-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Add Comment</span>
+          </button>
+          <button
             v-if="proxy.$superdoc.config.modules.ai"
-            class="tools-item"
+            class="superdoc__tools-btn"
             data-id="is-tool"
             @mousedown.stop.prevent="handleToolClick('ai')"
           >
             <div class="superdoc__tools-icon ai-tool"></div>
-          </div>
+          </button>
         </div>
 
         <div class="superdoc__document document">
@@ -1201,47 +1248,7 @@ const getPDFViewer = () => {
   z-index: 2;
 }
 
-/* Tools styles */
-.tools {
-  position: absolute;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tools .tool-icon {
-  font-size: 20px;
-  border-radius: 12px;
-  border: none;
-  outline: none;
-  background-color: #dbdbdb;
-  cursor: pointer;
-}
-
-.tools-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  background-color: rgba(219, 219, 219, 0.6);
-  border-radius: 12px;
-  cursor: pointer;
-  position: relative;
-}
-
-.tools-item i {
-  cursor: pointer;
-}
-
-.superdoc__tools-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-/* Tools styles - end */
+/* Tools styles - see second block below */
 
 /* .docx {
   border: 1px solid #dfdfdf;
@@ -1286,41 +1293,45 @@ const getPDFViewer = () => {
 } */
 
 /* Tools styles */
-.tools {
+.superdoc__tools {
   position: absolute;
-  z-index: 3;
-  display: flex;
-  gap: 6px;
+  z-index: 101;
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 
-.tools .tool-icon {
-  font-size: 20px;
-  border-radius: 12px;
-  border: none;
-  outline: none;
-  background-color: #dbdbdb;
-  cursor: pointer;
-}
-
-.tools-item {
-  display: flex;
+.superdoc__tools-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 50px;
-  height: 50px;
-  background-color: rgba(219, 219, 219, 0.6);
-  border-radius: 12px;
+  gap: 5px;
+  padding: 5px 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  color: #374151;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.tools-item i {
-  cursor: pointer;
+.superdoc__tools-btn:hover {
+  background: #f3f4f6;
+}
+
+.superdoc__tools-comment-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .superdoc__tools-icon {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
