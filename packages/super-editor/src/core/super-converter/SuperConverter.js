@@ -1241,6 +1241,8 @@ class SuperConverter {
   }
 
   #exportNumberingFile() {
+    if (!this.numbering) return;
+
     const numberingPath = 'word/numbering.xml';
     let numberingXml = this.convertedXml[numberingPath];
 
