@@ -1520,6 +1520,15 @@ export class EditorInputManager {
       return false; // Continue to body click handling
     }
 
+    // If the click landed in the same kind of region we're currently editing
+    // (e.g. footer region while editing footer), let it through so the PM editor
+    // can handle cursor placement. Without this, the click falls through to
+    // #handlePointerDown which calls event.preventDefault() and swallows it.
+    const currentMode = session?.session?.mode;
+    if (currentMode && headerFooterRegion.kind === currentMode) {
+      return true;
+    }
+
     // Click is in a H/F region on a different page — don't consume the event.
     // Let it fall through to the existing footer region check in #handlePointerDown
     // which properly calls event.preventDefault() before the dblclick handler activates it.

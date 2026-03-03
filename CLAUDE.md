@@ -127,3 +127,78 @@ These directories are produced by `pnpm run generate:all`:
 After a fresh clone, run `pnpm run generate:all` before working on SDK, CLI, or doc-api code.
 
 Note: `packages/sdk/tools/__init__.py` is a manual file (Python package marker) and stays committed.
+
+## Header/Footer Editing System
+
+Headers and footers use a **sibling host architecture** — editing happens in a separate ProseMirror editor mounted alongside (not inside) the static DomPainter decoration.
+
+### How it works
+
+1. **Static rendering**: `DomPainter.renderDecorationSection()` renders headers/footers as `<div class="superdoc-page-header">` / `<div class="superdoc-page-footer">` with `pointer-events: none`
+2. **Double-click activation**: `EditorInputManager.#handleDoubleClick()` → `hitTestHeaderFooterRegion()` → `HeaderFooterSessionManager.activateRegion()`
+3. **Editor host creation**: `EditorOverlayManager.showEditingOverlay()` creates a sibling `<div class="superdoc-header-editor-host">` with `pointer-events: auto` and `z-index: 10`
+4. **PM editor mount**: A separate ProseMirror editor instance is created and mounted inside the editor host
+5. **Exit**: Escape key or clicking body → `exitMode()` → hides editor host, shows static decoration
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `super-editor/src/core/presentation-editor/pointer-events/EditorInputManager.ts` | Double-click handler, pointer event routing during H/F editing |
+| `super-editor/src/core/presentation-editor/header-footer/HeaderFooterSessionManager.ts` | Session state machine (body ↔ header ↔ footer), region hit testing |
+| `super-editor/src/core/header-footer/EditorOverlayManager.ts` | Creates/positions editor host elements, manages border lines, height tracking |
+| `super-editor/src/core/header-footer/HeaderFooterRegistry.ts` | Creates and caches PM editor instances per header/footer variant |
+| `layout-engine/painters/dom/src/renderer.ts` | `renderDecorationSection()` for static rendering, `updateVirtualWindow()` for page virtualization |
+| `super-editor/src/core/presentation-editor/PresentationEditor.ts` | Orchestrates rerender cycle, focus save/restore during H/F editing |
+
+### Known pitfalls
+
+- **Focus loss during rerender (SD-1993)**: `updateVirtualWindow()` re-orders page elements via DOM mutations. Moving a page element causes `blur` on any focused descendant (the H/F PM editor). Fix: cursor-based DOM reconciliation that skips moves for elements already in position, plus focus save/restore safety net in `PresentationEditor.ts`.
+- **Click swallowing in H/F mode**: `#handlePointerDown` calls `event.preventDefault()` when a H/F region is detected (to prevent native selection before double-click). If `#handleClickInHeaderFooterMode` doesn't intercept clicks within the active editing region, cursor repositioning breaks. The check must pass clicks through when the hit region matches the currently-editing mode.
+- **ResizeObserver triggers rerender**: `EditorOverlayManager.startEditorHeightTracking()` fires `scheduleRerender()` on height changes, which can cause the focus-loss chain above.
+
+## PMIRS Integration (fork: Luthamm/ADEX)
+
+This is a customized fork of upstream `superdoc-dev/superdoc`. PMIRS (`/Code/pmirs/frontend`) consumes this as a pre-built tarball from GitHub Releases.
+
+### Release workflow
+
+1. Build: `cd packages/superdoc && pnpm run pack:es` → produces `superdoc.tgz`
+2. Release: `gh release create v1.16.X superdoc.tgz --repo Luthamm/ADEX --title "v1.16.X" --notes "description"`
+3. Update pmirs: In `pmirs/frontend/package.json`, change the version URL: `"@harbour-enterprises/superdoc": "https://github.com/Luthamm/ADEX/releases/download/v1.16.X/superdoc.tgz"`
+4. Clear cache + install: `npm cache clean --force && npm i`
+
+### How PMIRS wraps SuperDoc
+
+- **Main component**: `pmirs/frontend/src/components/superdoc/SuperDocEditor.tsx` (~1400 lines)
+- **Document loading**: `useDocumentLoader` hook fetches DOCX blob + editor content + header/footer content from API
+- **SuperDoc init**: `new SuperDoc({ selector, toolbar, documentMode, user, onCommentsUpdate, ... })` — user comes from JWT token
+- **Comments bridge**: `handleCommentsUpdate` callback receives SuperDoc comment events and calls `useCreateComment` / `useDeleteComment` API mutations
+- **Header/footer data**: Loaded from API as `headerContent`/`footerContent`, passed during save but NOT during init (SuperDoc manages them internally from the DOCX)
+- **No custom H/F UI**: All header/footer editing is delegated entirely to SuperDoc
+
+### Tracked changes import (current limitation)
+
+SuperDoc emits rich tracked change data via `onCommentsUpdate`:
+- `comment.trackedChange` = `true`
+- `comment.trackedChangeText` = description (e.g. "Inserted: 'hello'")
+- `comment.trackedChangeType` = "insertion" / "deletion"
+- `comment.deletedText` = the deleted text
+- `comment.importedAuthor` = `{ name: "Author Name (imported)" }`
+- `comment.creatorName` / `comment.creatorEmail` = original DOCX author
+
+The pmirs backend `create_comment` only stores `author_user_id` (FK to User table) — no custom author name/email columns. Imported tracked change author info is embedded in the content string as a workaround until backend support is added.
+
+### Upstream sync
+
+- This fork is ~40 commits behind `superdoc-dev/superdoc` main
+- Merge upstream periodically: `git fetch upstream && git merge upstream/main`
+- Key upstream contributors: Nick Bernal (architecture), Tadeu Tupinamba (layout/pointer fixes), Matt Connelly (click positioning)
+- After merging, rebuild and push a new release for pmirs to consume
+
+### Dev server
+
+- `pnpm dev` starts Vite dev server at `localhost:9094` with full source resolution (no build step needed)
+- `SuperdocDev.vue` at `packages/superdoc/src/dev/components/` is the dev harness (pulled from upstream)
+- Dev server imports `@superdoc/common` from `shared/common/` (resolved via pnpm workspace symlinks)
+- If Vite cache gets stale: `rm -rf packages/superdoc/node_modules/.vite && pnpm dev`
