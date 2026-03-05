@@ -2054,6 +2054,33 @@ export class PresentationEditor extends EventEmitter {
   }
 
   /**
+   * Returns the 1-based page number that contains the given ProseMirror position,
+   * or -1 if the position cannot be mapped to any page.
+   *
+   * @param pos - A ProseMirror document position
+   * @returns 1-based page number, or -1 if not found
+   */
+  getPageForPosition(pos: number): number {
+    const activeEditor = this.getActiveEditor();
+    const doc = activeEditor?.state?.doc;
+    if (!doc || !Number.isFinite(pos)) return -1;
+
+    const clampedPos = Math.max(0, Math.min(pos, doc.content.size));
+    const layout = this.#layoutState.layout;
+    if (!layout) return -1;
+
+    for (let idx = 0; idx < layout.pages.length; idx++) {
+      const frags = layout.pages[idx].fragments as Array<{ pmStart?: number; pmEnd?: number }>;
+      const first = frags[0];
+      const last = frags[frags.length - 1];
+      if (first?.pmStart != null && last?.pmEnd != null && clampedPos >= first.pmStart && clampedPos <= last.pmEnd) {
+        return idx + 1; // 1-based to match scrollToPage API
+      }
+    }
+    return -1;
+  }
+
+  /**
    * Scrolls a specific page into view.
    *
    * This method supports virtualized rendering: if the target page is not currently
@@ -4516,8 +4543,14 @@ export class PresentationEditor extends EventEmitter {
       yPosition += pageHeight + virtualGap;
     }
 
-    // Scroll viewport to the calculated position
-    if (this.#visibleHost) {
+    // Scroll the actual scroll container (e.g. OverlayScrollbars viewport)
+    // instead of #visibleHost which may not be the scrollable element
+    if (this.#scrollContainer instanceof HTMLElement && this.#scrollContainer !== this.#visibleHost) {
+      const hostRect = this.#visibleHost.getBoundingClientRect();
+      const containerRect = this.#scrollContainer.getBoundingClientRect();
+      const hostOffset = hostRect.top - containerRect.top + this.#scrollContainer.scrollTop;
+      this.#scrollContainer.scrollTop = hostOffset + yPosition;
+    } else if (this.#visibleHost) {
       this.#visibleHost.scrollTop = yPosition;
     }
   }
