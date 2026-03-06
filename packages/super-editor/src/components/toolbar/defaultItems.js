@@ -307,7 +307,6 @@ export const makeDefaultItems = ({
     active: false,
     icon: toolbarIcons.search,
     tooltip: toolbarTexts.search,
-    group: 'right',
     inputRef: searchRef,
     attributes: {
       ariaLabel: 'Search',
@@ -326,9 +325,19 @@ export const makeDefaultItems = ({
       superToolbar.activeEditor.commands.search(value);
     };
 
+    const handleReplace = ({ search, replace }) => {
+      superToolbar.activeEditor.commands.replaceNext(search, replace);
+    };
+
+    const handleReplaceAll = ({ search, replace }) => {
+      superToolbar.activeEditor.commands.replaceAll(search, replace);
+    };
+
     return h('div', {}, [
       h(SearchInput, {
         onSubmit: handleSubmit,
+        onReplace: handleReplace,
+        onReplaceAll: handleReplaceAll,
         searchRef,
       }),
     ]);
@@ -1221,6 +1230,7 @@ export const makeDefaultItems = ({
     linkedStyles,
     separator,
     ruler,
+    search,
     copyFormat,
     clearFormatting,
     aiButton,

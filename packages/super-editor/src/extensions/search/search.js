@@ -2,7 +2,14 @@
 
 import { Extension } from '@core/Extension.js';
 import { PositionTracker } from '@core/PositionTracker.js';
-import { search, SearchQuery, setSearchState, getMatchHighlights } from './prosemirror-search-patched.js';
+import {
+  search,
+  SearchQuery,
+  setSearchState,
+  getMatchHighlights,
+  replaceNext as pmReplaceNext,
+  replaceAll as pmReplaceAll,
+} from './prosemirror-search-patched.js';
 import { Plugin, PluginKey, TextSelection } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import { v4 as uuidv4 } from 'uuid';
@@ -469,6 +476,42 @@ export const Search = Extension.create({
           }
 
           return true;
+        },
+
+      /**
+       * Replace the next occurrence of searchText with replaceText
+       * @category Command
+       * @param {string} searchText - Text to search for
+       * @param {string} replaceText - Replacement text
+       * @example
+       * editor.commands.replaceNext('foo', 'bar')
+       */
+      replaceNext:
+        (searchText, replaceText) =>
+        /** @returns {boolean} */
+        ({ state, dispatch }) => {
+          const query = new SearchQuery({ search: searchText, replace: replaceText });
+          dispatch(setSearchState(state, query));
+          const newState = this.editor.view.state;
+          return pmReplaceNext(newState, (tr) => this.editor.view.dispatch(tr));
+        },
+
+      /**
+       * Replace all occurrences of searchText with replaceText
+       * @category Command
+       * @param {string} searchText - Text to search for
+       * @param {string} replaceText - Replacement text
+       * @example
+       * editor.commands.replaceAll('foo', 'bar')
+       */
+      replaceAll:
+        (searchText, replaceText) =>
+        /** @returns {boolean} */
+        ({ state, dispatch }) => {
+          const query = new SearchQuery({ search: searchText, replace: replaceText });
+          dispatch(setSearchState(state, query));
+          const newState = this.editor.view.state;
+          return pmReplaceAll(newState, (tr) => this.editor.view.dispatch(tr));
         },
     };
   },

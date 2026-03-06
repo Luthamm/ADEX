@@ -814,6 +814,26 @@ export class SuperDoc extends EventEmitter {
   }
 
   /**
+   * Lock document sections by predicate. A section is a heading paragraph
+   * (identified by styleId Heading1–Heading9) plus all content until the next
+   * heading of same or higher level, or doc end.
+   *
+   * @param {((heading: { text: string, level: number, index: number }) => boolean) | null} predicate
+   *   Return true to lock a section. Pass null to unlock all sections.
+   */
+  setLockedSections(predicate) {
+    const nextPredicate = typeof predicate === 'function' ? predicate : null;
+
+    this.superdocStore?.documents?.forEach((doc) => {
+      const editor = doc.getEditor?.();
+      if (editor?.setOptions) {
+        editor.setOptions({ lockedSectionPredicate: nextPredicate });
+        editor.view?.dispatch(editor.view.state.tr.setMeta('sectionLockUpdate', true));
+      }
+    });
+  }
+
+  /**
    * Triggered when a toolbar command is executed
    * @param {Object} param0
    * @param {Object} param0.item The toolbar item that was clicked

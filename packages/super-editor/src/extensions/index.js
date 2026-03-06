@@ -49,6 +49,7 @@ import { VectorShape } from './vector-shape/index.js';
 import { ShapeGroup } from './shape-group/index.js';
 import { PassthroughBlock, PassthroughInline } from '@extensions/passthrough/index.js';
 import { IndexEntry } from './index-entry/index.js';
+import { SectionLock } from './section-lock/index.js';
 
 // Marks extensions
 import { TextStyle } from './text-style/text-style.js';
@@ -116,6 +117,7 @@ const getRichTextExtensions = () => {
     CustomSelection,
     PassthroughInline,
     PassthroughBlock,
+    SectionLock,
   ];
 };
 
@@ -200,6 +202,7 @@ const getStarterExtensions = () => {
     VerticalNavigation,
     PassthroughInline,
     PassthroughBlock,
+    SectionLock,
   ];
 };
 
@@ -273,4 +276,5 @@ export {
   PassthroughInline,
   PassthroughBlock,
   PermissionRanges,
+  SectionLock,
 };

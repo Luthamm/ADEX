@@ -8,10 +8,19 @@ const props = defineProps({
 });
 
 const searchValue = ref('');
-const emit = defineEmits(['submit']);
+const replaceValue = ref('');
+const emit = defineEmits(['submit', 'replace', 'replaceAll']);
 
 const handleSubmit = () => {
   emit('submit', { value: searchValue.value });
+};
+
+const handleReplace = () => {
+  emit('replace', { search: searchValue.value, replace: replaceValue.value });
+};
+
+const handleReplaceAll = () => {
+  emit('replaceAll', { search: searchValue.value, replace: replaceValue.value });
 };
 </script>
 
@@ -28,8 +37,20 @@ const handleSubmit = () => {
         @keydown.enter.stop.prevent="handleSubmit"
       />
     </div>
+    <div class="row">
+      <input
+        v-model="replaceValue"
+        class="search-input"
+        type="text"
+        name="replace"
+        placeholder="Replace with"
+        @keydown.enter.stop.prevent="handleReplace"
+      />
+    </div>
     <div class="row submit">
-      <button class="submit-btn" @click="handleSubmit">Apply</button>
+      <button class="submit-btn" @click="handleSubmit">Find</button>
+      <button class="submit-btn replace-btn" @click="handleReplace">Replace</button>
+      <button class="submit-btn replace-btn" @click="handleReplaceAll">Replace All</button>
     </div>
   </div>
 </template>
@@ -59,6 +80,10 @@ const handleSubmit = () => {
     &.submit {
       margin-top: 10px;
       flex-direction: row-reverse;
+      gap: 6px;
+    }
+    & + .row {
+      margin-top: 8px;
     }
   }
   .submit-btn {
@@ -76,6 +101,12 @@ const handleSubmit = () => {
     cursor: pointer;
     transition: all 0.2s ease;
     box-sizing: border-box;
+  }
+  .replace-btn {
+    background-color: #444;
+    &:hover {
+      background-color: #333;
+    }
   }
 }
 </style>
