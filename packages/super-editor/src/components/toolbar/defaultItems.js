@@ -1,4 +1,4 @@
-import { h, ref } from 'vue';
+import { h, ref, watch } from 'vue';
 
 import { sanitizeNumber } from './helpers';
 import { useToolbarItem } from './use-toolbar-item';
@@ -7,6 +7,7 @@ import AlignmentButtons from './AlignmentButtons.vue';
 import DocumentMode from './DocumentMode.vue';
 import LinkedStyle from './LinkedStyle.vue';
 import LinkInput from './LinkInput.vue';
+import ModifyStyleDialog from './ModifyStyleDialog.vue';
 import { renderColorOptions } from './color-dropdown-helpers.js';
 import TableGrid from './TableGrid.vue';
 import TableActions from './TableActions.vue';
@@ -987,6 +988,10 @@ export const makeDefaultItems = ({
   });
 
   const selectedLinkedStyle = ref(null);
+  const showModifyDialog = ref(false);
+  const modifyDialogStyle = ref(null);
+  const modifyDialogIsNew = ref(false);
+  const stylesVersion = ref(0);
   const linkedStyles = useToolbarItem({
     type: 'dropdown',
     name: 'linkedStyles',
@@ -1016,11 +1021,77 @@ export const makeDefaultItems = ({
             selectedLinkedStyle.value = style.id;
           };
 
+          const handleModify = (style) => {
+            modifyDialogStyle.value = style;
+            modifyDialogIsNew.value = false;
+            showModifyDialog.value = true;
+          };
+
+          const handleCreate = () => {
+            modifyDialogStyle.value = null;
+            modifyDialogIsNew.value = true;
+            showModifyDialog.value = true;
+          };
+
+          const handleDialogSave = (data) => {
+            const editor = superToolbar.activeEditor;
+            if (!editor) return;
+
+            if (data.isNew) {
+              editor.commands.createLinkedStyle({
+                name: data.name,
+                basedOn: data.basedOn,
+                outlineLevel: data.outlineLevel,
+                styles: data.styles,
+              });
+            } else {
+              editor.commands.updateLinkedStyle(data.styleId, {
+                attrs: { name: data.name, basedOn: data.basedOn, outlineLevel: data.outlineLevel },
+                styles: data.styles,
+              });
+            }
+            stylesVersion.value++;
+            showModifyDialog.value = false;
+          };
+
+          const handleDialogCancel = () => {
+            showModifyDialog.value = false;
+          };
+
+          // Compute styles list fresh whenever stylesVersion changes
+          // (editor.converter.linkedStyles is non-reactive, so we deep-copy to give Vue a new reference)
+          const _version = stylesVersion.value;
+          const freshStyles = getQuickFormatList(superToolbar.activeEditor).map((s) => ({
+            ...s,
+            definition: {
+              ...s.definition,
+              attrs: { ...s.definition.attrs },
+              styles: { ...s.definition.styles },
+            },
+          }));
+
+          // Show either the style list or the dialog, not both
+          if (showModifyDialog.value) {
+            return h('div', { style: 'position: relative;' }, [
+              h(ModifyStyleDialog, {
+                style: modifyDialogStyle.value,
+                allStyles: freshStyles,
+                isNew: modifyDialogIsNew.value,
+                onSave: handleDialogSave,
+                onCancel: handleDialogCancel,
+              }),
+            ]);
+          }
+
           return h('div', {}, [
             h(LinkedStyle, {
               editor: superToolbar.activeEditor,
               onSelect: handleSelect,
+              onModify: handleModify,
+              onCreate: handleCreate,
               selectedOption: selectedLinkedStyle.value,
+              styles: freshStyles,
+              key: _version,
             }),
           ]);
         },
@@ -1039,6 +1110,16 @@ export const makeDefaultItems = ({
       linkedStyles.label.value = toolbarTexts.formatText;
     },
   });
+
+  // Reset dialog state when the dropdown closes
+  watch(
+    () => linkedStyles.expand.value,
+    (isOpen) => {
+      if (!isOpen) {
+        showModifyDialog.value = false;
+      }
+    },
+  );
 
   const renderIcon = (value, selectedValue) => {
     if (selectedValue.value != value) return;

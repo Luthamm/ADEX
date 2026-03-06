@@ -4,6 +4,12 @@ import { applyLinkedStyleToTransaction, generateLinkedStyleString } from './help
 import { createLinkedStylesPlugin, LinkedStylesPluginKey } from './plugin.js';
 import { findParentNodeClosestToPos } from '@core/helpers';
 import { getResolvedParagraphProperties } from '@extensions/paragraph/resolvedPropertiesCache.js';
+import {
+  updateStyleInConverter,
+  addStyleToConverter,
+  generateStyleId,
+  syncStylesToXml,
+} from './style-mutation-helpers.js';
 
 /**
  * Style definition from Word document
@@ -106,6 +112,53 @@ export const LinkedStyles = Extension.create({
         if (!style) return false;
 
         return applyLinkedStyleToTransaction(tr, this.editor, style);
+      },
+
+      /**
+       * Update an existing linked style's definition
+       * @category Command
+       * @param {string} styleId - The ID of the style to update
+       * @param {Object} updates - Object with { attrs, styles } to merge into the definition
+       * @example
+       * editor.commands.updateLinkedStyle('Heading1', { styles: { 'font-size': '18pt', bold: true } })
+       */
+      updateLinkedStyle: (styleId, updates) => (params) => {
+        const { tr } = params;
+        const success = updateStyleInConverter(this.editor, styleId, updates);
+        if (!success) return false;
+        syncStylesToXml(this.editor);
+        tr.setMeta('linkedStylesUpdate', true);
+        return true;
+      },
+
+      /**
+       * Create a new linked style
+       * @category Command
+       * @param {Object} definition - The style definition { name, basedOn, styles }
+       * @example
+       * editor.commands.createLinkedStyle({ name: 'My Style', basedOn: null, styles: { bold: true } })
+       */
+      createLinkedStyle: (definition) => (params) => {
+        const { tr } = params;
+        const styles = this.editor.converter?.linkedStyles || [];
+        const id = generateStyleId(definition.name, styles);
+        const newStyle = {
+          id,
+          type: 'paragraph',
+          definition: {
+            attrs: {
+              name: definition.name,
+              basedOn: definition.basedOn || null,
+              outlineLevel: definition.outlineLevel != null ? definition.outlineLevel : null,
+            },
+            styles: definition.styles || {},
+          },
+        };
+        const success = addStyleToConverter(this.editor, newStyle);
+        if (!success) return false;
+        syncStylesToXml(this.editor);
+        tr.setMeta('linkedStylesUpdate', true);
+        return true;
       },
     };
   },

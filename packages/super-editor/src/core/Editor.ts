@@ -48,6 +48,7 @@ import { unflattenListsInHtml } from './inputRules/html/html-helpers.js';
 import { SuperValidator } from '@core/super-validator/index.js';
 import { createDocFromMarkdown, createDocFromHTML } from '@core/helpers/index.js';
 import { COMMENT_FILE_BASENAMES } from '@core/super-converter/constants.js';
+import { syncStylesToXml } from '@extensions/linked-styles/style-mutation-helpers.js';
 import { isHeadless } from '../utils/headless-helpers.js';
 import { canUseDOM } from '../utils/canUseDOM.js';
 import { buildSchemaSummary } from './schema-summary.js';
@@ -2623,6 +2624,7 @@ export class Editor extends EventEmitter<EditorEventMap> {
       if (exportXmlOnly || exportJsonOnly) return documentXml;
 
       const customXml = this.converter.schemaToXml(this.converter.convertedXml['docProps/custom.xml'].elements[0]);
+      syncStylesToXml(this);
       const styles = this.converter.schemaToXml(this.converter.convertedXml['word/styles.xml'].elements[0]);
       const hasCustomSettings = !!this.converter.convertedXml['word/settings.xml']?.elements?.length;
       const customSettings = hasCustomSettings

@@ -986,10 +986,13 @@ export class SuperToolbar extends EventEmitter {
           markToStyleMap[item.name.value] in linkedStyles.definition.styles
         ) {
           const linkedStylesItem = linkedStyles.definition.styles[markToStyleMap[item.name.value]];
-          const value = {
-            [item.name.value]: linkedStylesItem,
-          };
-          item.activate(value);
+          // Only activate if the value is truthy (not false, '0', null, etc.)
+          if (linkedStylesItem && linkedStylesItem !== '0' && linkedStylesItem !== false) {
+            const value = {
+              [item.name.value]: linkedStylesItem,
+            };
+            item.activate(value);
+          }
         }
       }
       if (item.name.value === 'textAlign' && paragraphProps?.justification) {

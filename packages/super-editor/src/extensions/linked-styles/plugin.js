@@ -58,6 +58,15 @@ export const createLinkedStylesPlugin = (editor) => {
         }
         let decorations = prev.decorations || DecorationSet.empty;
 
+        // Handle style definition updates (modify/create)
+        if (tr.getMeta('linkedStylesUpdate')) {
+          const styles = editor.converter?.linkedStyles || [];
+          return {
+            styles,
+            decorations: generateDecorations(newEditorState, styles),
+          };
+        }
+
         // Only regenerate decorations when styles are affected
         if (tr.docChanged) {
           let mightAffectStyles = false;

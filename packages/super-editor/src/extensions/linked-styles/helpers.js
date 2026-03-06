@@ -190,6 +190,42 @@ export const generateLinkedStyleString = (linkedStyle, basedOnStyle, node, paren
 
   Object.entries(resultStyles).forEach(([k, value]) => {
     const key = kebabCase(k);
+
+    // Preview mode — no node/marks to check, just convert style props to CSS directly
+    if (!node) {
+      if (key === 'bold') {
+        const v = typeof value === 'object' && value !== null ? value.value : value;
+        if (v && v !== '0' && v !== false) markValue['font-weight'] = 'bold';
+      } else if (key === 'italic') {
+        const v = typeof value === 'object' && value !== null ? value.value : value;
+        if (v && v !== '0' && v !== false) markValue['font-style'] = 'italic';
+      } else if (key === 'strike') {
+        const v = typeof value === 'object' && value !== null ? value.value : value;
+        if (v && v !== '0' && v !== false) markValue['text-decoration'] = 'line-through';
+      } else if (key === 'underline') {
+        const styleValRaw =
+          value?.underline ?? value?.underlineType ?? value?.value ?? (typeof value === 'string' ? value : '');
+        const styleVal = styleValRaw.toString().toLowerCase();
+        if (styleVal && styleVal !== 'none' && styleVal !== '0' && styleVal !== 'false') {
+          const colorVal = value && typeof value === 'object' ? value.color || value.underlineColor || null : null;
+          const css = getUnderlineCssString({ type: styleVal, color: colorVal });
+          css.split(';').forEach((decl) => {
+            const d = decl.trim();
+            if (!d) return;
+            const idx = d.indexOf(':');
+            if (idx === -1) return;
+            markValue[d.slice(0, idx).trim()] = d.slice(idx + 1).trim();
+          });
+        }
+      } else if (key === 'highlight') {
+        const color = typeof value === 'string' ? value : value?.color;
+        if (color) markValue['background-color'] = color;
+      } else if (typeof value === 'string' && value) {
+        markValue[key] = value;
+      }
+      return;
+    }
+
     const flattenedMarks = [];
 
     // Flatten node marks (including text styles) for comparison
@@ -364,6 +400,13 @@ export const applyLinkedStyleToTransaction = (tr, editor, style) => {
       return true;
     });
   };
+
+  // Signal the linked styles plugin to regenerate decorations.
+  // setNodeMarkup creates a ReplaceAroundStep whose slice only contains
+  // the paragraph's children, not the paragraph itself. Without this meta,
+  // the plugin's mightAffectStyles heuristic misses the styleId change and
+  // skips decoration regeneration, leaving the text visually unchanged.
+  tr.setMeta('linkedStylesUpdate', true);
 
   // Handle cursor position (no selection)
   if (from === to) {
