@@ -3,7 +3,6 @@ import type { EditorState, Plugin, PluginKey } from 'prosemirror-state';
 
 import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 import { CommentsPluginKey } from '@extensions/comment/comments-plugin.js';
-import { customSearchHighlightsKey } from '@extensions/search/search.js';
 import { AiPluginKey } from '@extensions/ai/ai-plugin.js';
 import { CustomSelectionPluginKey } from '@extensions/custom-selection/custom-selection.js';
 import { LinkedStylesPluginKey } from '@extensions/linked-styles/plugin.js';
@@ -59,7 +58,6 @@ interface DesiredState {
 const EXCLUDED_PLUGIN_KEY_REF_LIST: PluginKey[] = [
   TrackChangesBasePluginKey,
   CommentsPluginKey,
-  customSearchHighlightsKey,
   AiPluginKey,
   CustomSelectionPluginKey,
   LinkedStylesPluginKey,
@@ -80,7 +78,6 @@ const EXCLUDED_PLUGIN_KEY_REFS: ReadonlySet<PluginKey> = new Set([...EXCLUDED_PL
  * | dropcapPlugin     | extensions/paragraph/dropcapPlugin.js          | Layout-level margin adjust    |
  * | ImagePosition     | extensions/image/imageHelpers/imagePositionPlugin.js | Layout-level image positioning |
  * | ImageRegistration | extensions/image/imageHelpers/imageRegistrationPlugin.js | Upload placeholder chrome |
- * | search            | extensions/search/prosemirror-search-patched.js | Painter handles search highlights |
  * | yjs-cursor        | y-prosemirror collaboration cursor plugin       | Remote cursor UI layer          |
  */
 const EXCLUDED_PLUGIN_KEY_PREFIXES: readonly string[] = [
@@ -89,7 +86,6 @@ const EXCLUDED_PLUGIN_KEY_PREFIXES: readonly string[] = [
   'dropcapPlugin',
   'ImagePosition',
   'ImageRegistration',
-  'search',
   'yjs-cursor',
 ];
 

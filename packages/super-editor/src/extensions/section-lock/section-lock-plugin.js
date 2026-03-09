@@ -33,7 +33,7 @@ function computeLockedRanges(doc, predicate) {
     if (level !== null) {
       headings.push({
         level,
-        text: node.textContent,
+        text: node.textContent.trim(),
         index: headingIndex++,
         from: offset,
       });

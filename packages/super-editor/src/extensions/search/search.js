@@ -392,9 +392,20 @@ export const Search = Extension.create({
             resultMatches.push(match);
           }
 
-          // Store results and highlight preference (no dispatches needed - decorations come from storage)
+          // Store results and highlight preference
           this.storage.searchResults = resultMatches;
           this.storage.highlightEnabled = highlight;
+
+          // Dispatch PM search state so the search plugin renders highlight decorations
+          const searchString = typeof patternInput === 'string' ? patternInput : patternInput.source;
+          const query = new SearchQuery({
+            search: searchString,
+            caseSensitive,
+            regexp: isRegexSearch,
+          });
+          if (dispatch) {
+            dispatch(setSearchState(state.tr, query, null, { highlight }));
+          }
 
           return resultMatches;
         },
