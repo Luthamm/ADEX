@@ -1119,6 +1119,7 @@ export const makeDefaultItems = ({
       linkedStyles.label.value = toolbarTexts.formatText;
     },
   });
+  linkedStyles.dropdownPlacement = 'bottom-end';
 
   // Reset dialog state when the dropdown closes
   watch(
@@ -1302,6 +1303,7 @@ export const makeDefaultItems = ({
   // until everything fits within the available width.
   if (hideButtons) {
     for (let i = sections.length - 1; i >= 0 && totalWidth > availableWidth; i--) {
+      if (sections[i].id === 'formatText') continue;
       sections[i].collapsed = true;
       totalWidth -= sections[i].expandedWidth - COLLAPSED_SECTION_WIDTH;
       // Collapsed sections don't need separators

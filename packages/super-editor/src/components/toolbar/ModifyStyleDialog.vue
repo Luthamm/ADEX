@@ -310,6 +310,7 @@ const selectBasedOn = (styleId) => {
 <style scoped>
 .modify-style-dialog {
   width: 340px;
+  max-width: calc(100vw - 24px);
   background: #fff;
   padding: 16px;
   box-sizing: border-box;
