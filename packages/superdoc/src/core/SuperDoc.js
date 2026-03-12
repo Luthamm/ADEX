@@ -820,14 +820,16 @@ export class SuperDoc extends EventEmitter {
    *
    * @param {((heading: { text: string, level: number, index: number }) => boolean) | null} predicate
    *   Return true to lock a section. Pass null to unlock all sections.
+   * @param {{ onBlocked?: () => void }} [options]
    */
-  setLockedSections(predicate) {
+  setLockedSections(predicate, options) {
     const nextPredicate = typeof predicate === 'function' ? predicate : null;
+    const onBlocked = typeof options?.onBlocked === 'function' ? options.onBlocked : null;
 
     this.superdocStore?.documents?.forEach((doc) => {
       const editor = doc.getEditor?.();
       if (editor?.setOptions) {
-        editor.setOptions({ lockedSectionPredicate: nextPredicate });
+        editor.setOptions({ lockedSectionPredicate: nextPredicate, onLockedSectionBlocked: onBlocked });
         editor.view?.dispatch(editor.view.state.tr.setMeta('sectionLockUpdate', true));
       }
     });

@@ -96,6 +96,19 @@ function buildDecorations(doc, ranges) {
 }
 
 /**
+ * Fire the onLockedSectionBlocked callback, throttled so rapid keystrokes
+ * don't spam notifications.
+ */
+let lastBlockedNotify = 0;
+function notifyBlocked(editor) {
+  const now = Date.now();
+  if (now - lastBlockedNotify < 2000) return;
+  lastBlockedNotify = now;
+  const cb = editor?.options?.onLockedSectionBlocked;
+  if (typeof cb === 'function') cb();
+}
+
+/**
  * Create the section lock plugin.
  * The predicate is read from `editor.options.lockedSectionPredicate`.
  *
@@ -155,6 +168,7 @@ export function createSectionLockPlugin(editor) {
 
         if (isRangeLocked(pluginState.ranges, affectedFrom, affectedTo)) {
           event.preventDefault();
+          notifyBlocked(editor);
           return true;
         }
         return false;
@@ -163,14 +177,22 @@ export function createSectionLockPlugin(editor) {
       handleTextInput(view, from, to, _text) {
         const pluginState = SECTION_LOCK_KEY.getState(view.state);
         if (!pluginState?.ranges.length) return false;
-        return isRangeLocked(pluginState.ranges, from, to);
+        if (isRangeLocked(pluginState.ranges, from, to)) {
+          notifyBlocked(editor);
+          return true;
+        }
+        return false;
       },
 
       handlePaste(view) {
         const { from, to } = view.state.selection;
         const pluginState = SECTION_LOCK_KEY.getState(view.state);
         if (!pluginState?.ranges.length) return false;
-        return isRangeLocked(pluginState.ranges, from, to);
+        if (isRangeLocked(pluginState.ranges, from, to)) {
+          notifyBlocked(editor);
+          return true;
+        }
+        return false;
       },
 
       handleDrop(view, event) {
@@ -180,7 +202,11 @@ export function createSectionLockPlugin(editor) {
 
         const pluginState = SECTION_LOCK_KEY.getState(view.state);
         if (!pluginState?.ranges.length) return false;
-        return isRangeLocked(pluginState.ranges, pos.pos, pos.pos);
+        if (isRangeLocked(pluginState.ranges, pos.pos, pos.pos)) {
+          notifyBlocked(editor);
+          return true;
+        }
+        return false;
       },
     },
 
@@ -195,7 +221,10 @@ export function createSectionLockPlugin(editor) {
 
       for (const step of tr.steps) {
         if (step.from === undefined || step.to === undefined) continue;
-        if (isRangeLocked(pluginState.ranges, step.from, step.to)) return false;
+        if (isRangeLocked(pluginState.ranges, step.from, step.to)) {
+          notifyBlocked(editor);
+          return false;
+        }
       }
       return true;
     },
