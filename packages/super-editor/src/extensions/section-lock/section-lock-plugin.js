@@ -36,6 +36,7 @@ function computeLockedRanges(doc, predicate) {
         text: node.textContent.trim(),
         index: headingIndex++,
         from: offset,
+        end: offset + node.nodeSize,
       });
     }
   });
@@ -61,7 +62,7 @@ function computeLockedRanges(doc, predicate) {
       }
     }
 
-    ranges.push({ from: heading.from, to: sectionEnd });
+    ranges.push({ from: heading.end, to: sectionEnd });
   }
 
   return ranges;
